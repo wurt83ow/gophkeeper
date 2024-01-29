@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS FilesData (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER,
+    path TEXT NOT NULL,
+    meta_info TEXT,
+    deleted BOOLEAN DEFAULT FALSE,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES Users(id)
+);
