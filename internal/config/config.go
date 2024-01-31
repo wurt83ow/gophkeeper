@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 )
 
 type Options struct {
@@ -65,8 +64,7 @@ func (o *Options) ParseFlags() {
 }
 
 func (o *Options) RunAddr() string {
-	useHTTPS := getBoolFlag("s")
-	return formatServerAddress(getStringFlag("a"), useHTTPS)
+	return getStringFlag("a")
 }
 
 func (o *Options) DataBaseDSN() string {
@@ -111,19 +109,6 @@ func getStringFlag(name string) string {
 // getBoolFlag retrieves the bool value of the specified flag.
 func getBoolFlag(name string) bool {
 	return flag.Lookup(name).Value.(flag.Getter).Get().(bool)
-}
-
-func formatServerAddress(addr string, useHTTPS bool) string {
-	// Проверяем, начинается ли адрес с ":"
-	if strings.HasPrefix(addr, ":") {
-		// Если да, добавляем "http://localhost" или "https://localhost"
-		if useHTTPS {
-			return "https://localhost" + addr
-		}
-		return "http://localhost" + addr
-	}
-	// Если адрес не начинается с ":", оставляем его без изменений
-	return addr
 }
 
 // GetAsString reads an environment or returns a default value.

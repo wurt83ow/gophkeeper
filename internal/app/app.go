@@ -109,10 +109,12 @@ func startServer(router chi.Router, address string) {
 		ConnContext:                  nil,
 	}
 
+	log.Printf("Starting server at %s\n", address)
 	err := server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalln(err)
 	}
+
 }
 
 func (server *Server) Shutdown() {
