@@ -4,19 +4,17 @@ go 1.21.1
 
 require (
 	github.com/getkin/kin-openapi v0.123.0
-	github.com/go-chi/chi v1.5.5
 	github.com/go-chi/chi/v5 v5.0.11
-	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/jackc/pgx/v5 v5.5.2
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/stretchr/testify v1.8.4
-	github.com/wurt83ow/gophkeeper-server v0.0.0-20240106140912-d824c13cb57c
 	go.uber.org/zap v1.26.0
 )
 
 require (
+	github.com/766b/go-outliner v0.0.0-20180511142203-fc6edecdadd7 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-openapi/jsonpointer v0.20.2 // indirect

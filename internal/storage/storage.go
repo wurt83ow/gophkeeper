@@ -1,10 +1,8 @@
-// Package storage provides an in-memory storage implementation with CRUD operations for URL and user data.
-// It includes interfaces and a MemoryStorage type implementing these interfaces.
 package storage
 
 import (
+	"context"
 	"errors"
-	"sync"
 
 	"go.uber.org/zap/zapcore"
 )
@@ -21,16 +19,65 @@ type Log interface {
 type MemoryStorage struct {
 	keeper Keeper
 	log    Log
-	dmx    sync.RWMutex
-	umx    sync.RWMutex
+}
+
+type Keeper interface {
+	UserExists(ctx context.Context, username string) (bool, error)
+	AddUser(ctx context.Context, username string, hashedPassword string) error
+	GetPassword(ctx context.Context, username string) (string, error)
+	GetUserID(ctx context.Context, username string) (int, error)
+	AddData(ctx context.Context, user_id int, table string, data map[string]string) error
+	UpdateData(ctx context.Context, user_id int, id int, table string, data map[string]string) error
+	DeleteData(ctx context.Context, user_id int, table string, id string) error
+	GetData(ctx context.Context, user_id int, table string, id int) (map[string]string, error)
+	GetAllData(ctx context.Context, table string, columns ...string) ([]map[string]string, error)
+	ClearData(ctx context.Context, userID int, table string) error
 }
 
 // NewMemoryStorage creates a new MemoryStorage instance with the provided Keeper and logger.
 func NewMemoryStorage(keeper Keeper, log Log) *MemoryStorage {
-
 	return &MemoryStorage{
-
 		keeper: keeper,
 		log:    log,
 	}
+}
+
+func (ms *MemoryStorage) UserExists(ctx context.Context, username string) (bool, error) {
+	return ms.keeper.UserExists(ctx, username)
+}
+
+func (ms *MemoryStorage) AddUser(ctx context.Context, username string, hashedPassword string) error {
+	return ms.keeper.AddUser(ctx, username, hashedPassword)
+}
+
+func (ms *MemoryStorage) GetPassword(ctx context.Context, username string) (string, error) {
+	return ms.keeper.GetPassword(ctx, username)
+}
+
+func (ms *MemoryStorage) GetUserID(ctx context.Context, username string) (int, error) {
+	return ms.keeper.GetUserID(ctx, username)
+}
+
+func (ms *MemoryStorage) AddData(ctx context.Context, user_id int, table string, data map[string]string) error {
+	return ms.keeper.AddData(ctx, user_id, table, data)
+}
+
+func (ms *MemoryStorage) UpdateData(ctx context.Context, user_id int, id int, table string, data map[string]string) error {
+	return ms.keeper.UpdateData(ctx, user_id, id, table, data)
+}
+
+func (ms *MemoryStorage) DeleteData(ctx context.Context, user_id int, table string, id string) error {
+	return ms.keeper.DeleteData(ctx, user_id, table, id)
+}
+
+func (ms *MemoryStorage) GetData(ctx context.Context, user_id int, table string, id int) (map[string]string, error) {
+	return ms.keeper.GetData(ctx, user_id, table, id)
+}
+
+func (ms *MemoryStorage) GetAllData(ctx context.Context, table string, columns ...string) ([]map[string]string, error) {
+	return ms.keeper.GetAllData(ctx, table, columns...)
+}
+
+func (ms *MemoryStorage) ClearData(ctx context.Context, userID int, table string) error {
+	return ms.keeper.ClearData(ctx, userID, table)
 }

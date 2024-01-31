@@ -2,6 +2,14 @@ package models
 
 import "time"
 
+// Key is an alias for string and represents a key used in various contexts.
+type Key string
+
+// Response describes the server's response.
+type Response struct {
+	Result string `json:"result"`
+}
+
 type User struct {
 	ID       int    `db:"id"`
 	Username string `db:"username"`

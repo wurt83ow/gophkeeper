@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	authz "github.com/wurt83ow/gophkeeper-server/internal/authorization"
 	"github.com/wurt83ow/gophkeeper-server/internal/bdkeeper"
 	"github.com/wurt83ow/gophkeeper-server/internal/config"
+	"github.com/wurt83ow/gophkeeper-server/internal/controllers"
 	"github.com/wurt83ow/gophkeeper-server/internal/logger"
 	"github.com/wurt83ow/gophkeeper-server/internal/middleware"
 
@@ -47,11 +47,10 @@ func (server *Server) Serve() {
 	// initialize the storage instance
 	memoryStorage := initializeStorage(keeper, nLogger)
 
-	// create a new NewJWTAuthz for user authorization
-	authz := authz.NewJWTAuthz(option.JWTSigningKey(), nLogger)
-
 	// create a new controller to process incoming requests
-	basecontr := initializeBaseController(memoryStorage, option, nLogger, authz)
+	//basecontr := initializeBaseController(memoryStorage, option, nLogger, authz)
+	basecontr := initializeBaseController(memoryStorage, option, nLogger)
+	genHandler := controllers.Handler(basecontr) // создайте обработчик HTTP из вашего сервера
 
 	// get a middleware for logging requests
 	reqLog := middleware.NewReqLog(nLogger)
@@ -59,7 +58,7 @@ func (server *Server) Serve() {
 	// create router and mount routes
 	r := chi.NewRouter()
 	r.Use(reqLog.RequestLogger)
-	r.Mount("/", basecontr.Route())
+	r.Mount("/", genHandler)
 
 	// configure and start the server
 	startServer(r, option.RunAddr())
@@ -81,10 +80,10 @@ func initializeStorage(keeper storage.Keeper, logger *logger.Logger) *storage.Me
 	return storage.NewMemoryStorage(keeper, logger)
 }
 
-func initializeBaseController(storage *storage.MemoryStorage, option *config.Options,
-	logger *logger.Logger, authz *authz.JWTAuthz,
+func initializeBaseController(storage *storage.MemoryStorage, options *config.Options,
+	logger *logger.Logger,
 ) *controllers.BaseController {
-	return controllers.NewBaseController(storage, option, logger, authz)
+	return controllers.NewBaseController(storage, options, logger)
 }
 
 func startServer(router chi.Router, address string) {

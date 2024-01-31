@@ -1,0 +1,86 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_EXCMD	mixed	/number, pattern, mixed, or combineV2/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROC_CWD	/mnt/media1tbx/yndx_work/personal/dev/go_projects/current/gophkeeper/gkeeper-server/internal/controllers/	//
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	5.9.0	//
+BaseRouter	base.go	/^	BaseRouter       chi.Router$/;"	m	struct:controllers.ChiServerOptions	typeref:typename:chi.Router
+BaseURL	base.go	/^	BaseURL          string$/;"	m	struct:controllers.ChiServerOptions	typeref:typename:string
+ChiServerOptions	base.go	/^type ChiServerOptions struct {$/;"	s	package:controllers
+Count	base.go	/^	Count     int$/;"	m	struct:controllers.TooManyValuesForParamError	typeref:typename:int
+DeleteClearDataTableUserID	base.go	/^	DeleteClearDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int)$/;"	n	interface:controllers.ServerInterface
+DeleteClearDataTableUserID	base.go	/^func (_ Unimplemented) DeleteClearDataTableUserID(w http.ResponseWriter, r *http.Request, table /;"	f	struct:controllers.Unimplemented
+DeleteClearDataTableUserID	base.go	/^func (siw *ServerInterfaceWrapper) DeleteClearDataTableUserID(w http.ResponseWriter, r *http.Req/;"	f	struct:controllers.ServerInterfaceWrapper
+DeleteDeleteDataTableUserIDId	base.go	/^	DeleteDeleteDataTableUserIDId(w http.ResponseWriter, r *http.Request, table string, userID int,/;"	n	interface:controllers.ServerInterface
+DeleteDeleteDataTableUserIDId	base.go	/^func (_ Unimplemented) DeleteDeleteDataTableUserIDId(w http.ResponseWriter, r *http.Request, tab/;"	f	struct:controllers.Unimplemented
+DeleteDeleteDataTableUserIDId	base.go	/^func (siw *ServerInterfaceWrapper) DeleteDeleteDataTableUserIDId(w http.ResponseWriter, r *http./;"	f	struct:controllers.ServerInterfaceWrapper
+Err	base.go	/^	Err       error$/;"	m	struct:controllers.InvalidParamFormatError	typeref:typename:error
+Err	base.go	/^	Err       error$/;"	m	struct:controllers.RequiredHeaderError	typeref:typename:error
+Err	base.go	/^	Err       error$/;"	m	struct:controllers.UnescapedCookieParamError	typeref:typename:error
+Err	base.go	/^	Err       error$/;"	m	struct:controllers.UnmarshalingParamError	typeref:typename:error
+Error	base.go	/^func (e *InvalidParamFormatError) Error() string {$/;"	f	struct:controllers.InvalidParamFormatError	typeref:typename:string
+Error	base.go	/^func (e *RequiredHeaderError) Error() string {$/;"	f	struct:controllers.RequiredHeaderError	typeref:typename:string
+Error	base.go	/^func (e *RequiredParamError) Error() string {$/;"	f	struct:controllers.RequiredParamError	typeref:typename:string
+Error	base.go	/^func (e *TooManyValuesForParamError) Error() string {$/;"	f	struct:controllers.TooManyValuesForParamError	typeref:typename:string
+Error	base.go	/^func (e *UnescapedCookieParamError) Error() string {$/;"	f	struct:controllers.UnescapedCookieParamError	typeref:typename:string
+Error	base.go	/^func (e *UnmarshalingParamError) Error() string {$/;"	f	struct:controllers.UnmarshalingParamError	typeref:typename:string
+ErrorHandlerFunc	base.go	/^	ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)$/;"	m	struct:controllers.ServerInterfaceWrapper	typeref:typename:func(w http.ResponseWriter, r *http.Request, err error)
+ErrorHandlerFunc	base.go	/^	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)$/;"	m	struct:controllers.ChiServerOptions	typeref:typename:func(w http.ResponseWriter, r *http.Request, err error)
+GetGetAllDataTableUserID	base.go	/^	GetGetAllDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int)$/;"	n	interface:controllers.ServerInterface
+GetGetAllDataTableUserID	base.go	/^func (_ Unimplemented) GetGetAllDataTableUserID(w http.ResponseWriter, r *http.Request, table st/;"	f	struct:controllers.Unimplemented
+GetGetAllDataTableUserID	base.go	/^func (siw *ServerInterfaceWrapper) GetGetAllDataTableUserID(w http.ResponseWriter, r *http.Reque/;"	f	struct:controllers.ServerInterfaceWrapper
+GetGetDataTableUserID	base.go	/^	GetGetDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int)$/;"	n	interface:controllers.ServerInterface
+GetGetDataTableUserID	base.go	/^func (_ Unimplemented) GetGetDataTableUserID(w http.ResponseWriter, r *http.Request, table strin/;"	f	struct:controllers.Unimplemented
+GetGetDataTableUserID	base.go	/^func (siw *ServerInterfaceWrapper) GetGetDataTableUserID(w http.ResponseWriter, r *http.Request)/;"	f	struct:controllers.ServerInterfaceWrapper
+GetGetPasswordUsername	base.go	/^	GetGetPasswordUsername(w http.ResponseWriter, r *http.Request, username string)$/;"	n	interface:controllers.ServerInterface
+GetGetPasswordUsername	base.go	/^func (_ Unimplemented) GetGetPasswordUsername(w http.ResponseWriter, r *http.Request, username s/;"	f	struct:controllers.Unimplemented
+GetGetPasswordUsername	base.go	/^func (siw *ServerInterfaceWrapper) GetGetPasswordUsername(w http.ResponseWriter, r *http.Request/;"	f	struct:controllers.ServerInterfaceWrapper
+GetGetUserIDUsername	base.go	/^	GetGetUserIDUsername(w http.ResponseWriter, r *http.Request, username string)$/;"	n	interface:controllers.ServerInterface
+GetGetUserIDUsername	base.go	/^func (_ Unimplemented) GetGetUserIDUsername(w http.ResponseWriter, r *http.Request, username str/;"	f	struct:controllers.Unimplemented
+GetGetUserIDUsername	base.go	/^func (siw *ServerInterfaceWrapper) GetGetUserIDUsername(w http.ResponseWriter, r *http.Request) /;"	f	struct:controllers.ServerInterfaceWrapper
+Handler	base.go	/^	Handler            ServerInterface$/;"	m	struct:controllers.ServerInterfaceWrapper	typeref:typename:ServerInterface
+Handler	base.go	/^func Handler(si ServerInterface) http.Handler {$/;"	f	package:controllers	typeref:typename:http.Handler
+HandlerFromMux	base.go	/^func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {$/;"	f	package:controllers	typeref:typename:http.Handler
+HandlerFromMuxWithBaseURL	base.go	/^func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {$/;"	f	package:controllers	typeref:typename:http.Handler
+HandlerMiddlewares	base.go	/^	HandlerMiddlewares []MiddlewareFunc$/;"	m	struct:controllers.ServerInterfaceWrapper	typeref:typename:[]MiddlewareFunc
+HandlerWithOptions	base.go	/^func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {$/;"	f	package:controllers	typeref:typename:http.Handler
+InvalidParamFormatError	base.go	/^type InvalidParamFormatError struct {$/;"	s	package:controllers
+MiddlewareFunc	base.go	/^type MiddlewareFunc func(http.Handler) http.Handler$/;"	t	package:controllers	typeref:typename:func(http.Handler) http.Handler
+Middlewares	base.go	/^	Middlewares      []MiddlewareFunc$/;"	m	struct:controllers.ChiServerOptions	typeref:typename:[]MiddlewareFunc
+ParamName	base.go	/^	ParamName string$/;"	m	struct:controllers.InvalidParamFormatError	typeref:typename:string
+ParamName	base.go	/^	ParamName string$/;"	m	struct:controllers.RequiredHeaderError	typeref:typename:string
+ParamName	base.go	/^	ParamName string$/;"	m	struct:controllers.RequiredParamError	typeref:typename:string
+ParamName	base.go	/^	ParamName string$/;"	m	struct:controllers.TooManyValuesForParamError	typeref:typename:string
+ParamName	base.go	/^	ParamName string$/;"	m	struct:controllers.UnescapedCookieParamError	typeref:typename:string
+ParamName	base.go	/^	ParamName string$/;"	m	struct:controllers.UnmarshalingParamError	typeref:typename:string
+PostAddDataTableUserID	base.go	/^	PostAddDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int)$/;"	n	interface:controllers.ServerInterface
+PostAddDataTableUserID	base.go	/^func (_ Unimplemented) PostAddDataTableUserID(w http.ResponseWriter, r *http.Request, table stri/;"	f	struct:controllers.Unimplemented
+PostAddDataTableUserID	base.go	/^func (siw *ServerInterfaceWrapper) PostAddDataTableUserID(w http.ResponseWriter, r *http.Request/;"	f	struct:controllers.ServerInterfaceWrapper
+PostAddDataTableUserIDJSONBody	base.go	/^type PostAddDataTableUserIDJSONBody map[string]string$/;"	t	package:controllers	typeref:typename:map[string]string
+PostAddDataTableUserIDJSONRequestBody	base.go	/^type PostAddDataTableUserIDJSONRequestBody PostAddDataTableUserIDJSONBody$/;"	t	package:controllers	typeref:typename:PostAddDataTableUserIDJSONBody
+PostSendFileUserID	base.go	/^	PostSendFileUserID(w http.ResponseWriter, r *http.Request, userID int)$/;"	n	interface:controllers.ServerInterface
+PostSendFileUserID	base.go	/^func (_ Unimplemented) PostSendFileUserID(w http.ResponseWriter, r *http.Request, userID int) {$/;"	f	struct:controllers.Unimplemented
+PostSendFileUserID	base.go	/^func (siw *ServerInterfaceWrapper) PostSendFileUserID(w http.ResponseWriter, r *http.Request) {$/;"	f	struct:controllers.ServerInterfaceWrapper
+PutUpdateDataTableUserIDId	base.go	/^	PutUpdateDataTableUserIDId(w http.ResponseWriter, r *http.Request, table string, userID int, id/;"	n	interface:controllers.ServerInterface
+PutUpdateDataTableUserIDId	base.go	/^func (_ Unimplemented) PutUpdateDataTableUserIDId(w http.ResponseWriter, r *http.Request, table /;"	f	struct:controllers.Unimplemented
+PutUpdateDataTableUserIDId	base.go	/^func (siw *ServerInterfaceWrapper) PutUpdateDataTableUserIDId(w http.ResponseWriter, r *http.Req/;"	f	struct:controllers.ServerInterfaceWrapper
+PutUpdateDataTableUserIDIdJSONBody	base.go	/^type PutUpdateDataTableUserIDIdJSONBody map[string]string$/;"	t	package:controllers	typeref:typename:map[string]string
+PutUpdateDataTableUserIDIdJSONRequestBody	base.go	/^type PutUpdateDataTableUserIDIdJSONRequestBody PutUpdateDataTableUserIDIdJSONBody$/;"	t	package:controllers	typeref:typename:PutUpdateDataTableUserIDIdJSONBody
+RequiredHeaderError	base.go	/^type RequiredHeaderError struct {$/;"	s	package:controllers
+RequiredParamError	base.go	/^type RequiredParamError struct {$/;"	s	package:controllers
+ServerInterface	base.go	/^type ServerInterface interface {$/;"	i	package:controllers
+ServerInterfaceWrapper	base.go	/^type ServerInterfaceWrapper struct {$/;"	s	package:controllers
+TooManyValuesForParamError	base.go	/^type TooManyValuesForParamError struct {$/;"	s	package:controllers
+UnescapedCookieParamError	base.go	/^type UnescapedCookieParamError struct {$/;"	s	package:controllers
+Unimplemented	base.go	/^type Unimplemented struct{}$/;"	s	package:controllers
+UnmarshalingParamError	base.go	/^type UnmarshalingParamError struct {$/;"	s	package:controllers
+Unwrap	base.go	/^func (e *InvalidParamFormatError) Unwrap() error {$/;"	f	struct:controllers.InvalidParamFormatError	typeref:typename:error
+Unwrap	base.go	/^func (e *RequiredHeaderError) Unwrap() error {$/;"	f	struct:controllers.RequiredHeaderError	typeref:typename:error
+Unwrap	base.go	/^func (e *UnescapedCookieParamError) Unwrap() error {$/;"	f	struct:controllers.UnescapedCookieParamError	typeref:typename:error
+Unwrap	base.go	/^func (e *UnmarshalingParamError) Unwrap() error {$/;"	f	struct:controllers.UnmarshalingParamError	typeref:typename:error
+controllers	base.go	/^package controllers$/;"	p
