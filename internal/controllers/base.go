@@ -653,37 +653,27 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/addData/{table}/{userID}", wrapper.PostAddDataTableUserID)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/clearData/{table}/{userID}", wrapper.DeleteClearDataTableUserID)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/deleteData/{table}/{userID}/{id}", wrapper.DeleteDeleteDataTableUserIDId)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/getAllData/{table}/{userID}", wrapper.GetGetAllDataTableUserID)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/getData/{table}/{userID}", wrapper.GetGetDataTableUserID)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/getPassword/{username}", wrapper.GetGetPasswordUsername)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/getUserID/{username}", wrapper.GetGetUserIDUsername)
-	})
+	// Routes that do not require authentication
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/login", wrapper.PostLogin)
-	})
-	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/register", wrapper.PostRegister)
 	})
+
+	// Routes that require authentication
 	r.Group(func(r chi.Router) {
+		// Apply the JWTAuthzMiddleware to these routes
+		for _, middleware := range options.Middlewares {
+			r.Use(middleware)
+		}
+
+		r.Post(options.BaseURL+"/addData/{table}/{userID}", wrapper.PostAddDataTableUserID)
+		r.Delete(options.BaseURL+"/clearData/{table}/{userID}", wrapper.DeleteClearDataTableUserID)
+		r.Delete(options.BaseURL+"/deleteData/{table}/{userID}/{id}", wrapper.DeleteDeleteDataTableUserIDId)
+		r.Get(options.BaseURL+"/getAllData/{table}/{userID}", wrapper.GetGetAllDataTableUserID)
+		r.Get(options.BaseURL+"/getData/{table}/{userID}", wrapper.GetGetDataTableUserID)
+		r.Get(options.BaseURL+"/getPassword/{username}", wrapper.GetGetPasswordUsername)
+		r.Get(options.BaseURL+"/getUserID/{username}", wrapper.GetGetUserIDUsername)
 		r.Post(options.BaseURL+"/sendFile/{userID}", wrapper.PostSendFileUserID)
-	})
-	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/updateData/{table}/{userID}/{id}", wrapper.PutUpdateDataTableUserIDId)
 	})
 
