@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	authz "github.com/wurt83ow/gophkeeper-server/internal/authorization"
 	"github.com/wurt83ow/gophkeeper-server/internal/bdkeeper"
 	"github.com/wurt83ow/gophkeeper-server/internal/config"
 	"github.com/wurt83ow/gophkeeper-server/internal/controllers"
 	"github.com/wurt83ow/gophkeeper-server/internal/logger"
 	"github.com/wurt83ow/gophkeeper-server/internal/middleware"
-
 	"github.com/wurt83ow/gophkeeper-server/internal/storage"
 )
 
@@ -47,10 +47,20 @@ func (server *Server) Serve() {
 	// initialize the storage instance
 	memoryStorage := initializeStorage(keeper, nLogger)
 
+	authz := authz.NewJWTAuthz(option.JWTSigningKey(), nLogger)
+
 	// create a new controller to process incoming requests
 	//basecontr := initializeBaseController(memoryStorage, option, nLogger, authz)
 	basecontr := initializeBaseController(memoryStorage, option, nLogger)
-	genHandler := controllers.Handler(basecontr) // создайте обработчик HTTP из вашего сервера
+
+	// Создайте экземпляр ChiServerOptions с вашим middleware
+	options := controllers.ChiServerOptions{
+		Middlewares: []controllers.MiddlewareFunc{
+			authz.JWTAuthzMiddleware(memoryStorage, nLogger),
+		},
+	}
+
+	genHandler := controllers.HandlerWithOptions(basecontr, options) // создайте обработчик HTTP из вашего сервера
 
 	// get a middleware for logging requests
 	reqLog := middleware.NewReqLog(nLogger)

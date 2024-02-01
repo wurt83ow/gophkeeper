@@ -131,11 +131,13 @@ func (h *BaseController) DeleteDeleteDataTableUserIDId(w http.ResponseWriter, r 
 
 // (GET /getAllData/{table}/{userID})
 func (h *BaseController) GetGetAllDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int) {
+	fmt.Println("7777777777777777777777777777777777777777777777777777777777", table, userID)
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // (GET /getData/{table}/{userID})
 func (h *BaseController) GetGetDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int) {
+	fmt.Println("8888888889999999999999999999999999997777777777777777777777777", table, userID)
 	w.WriteHeader(http.StatusNotImplemented)
 }
 

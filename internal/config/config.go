@@ -9,7 +9,7 @@ import (
 
 type Options struct {
 	flagRunAddr, flagDataBaseDSN, flagLogLevel,
-	flagHTTPSCertFile, flagHTTPSKeyFile string
+	flagHTTPSCertFile, flagHTTPSKeyFile, flagJWTSigningKey string
 	flagEnableHTTPS bool
 }
 
@@ -26,6 +26,7 @@ func (o *Options) ParseFlags() {
 	regStringVar(&o.flagHTTPSCertFile, "r", "", "path to https cert file")
 	regStringVar(&o.flagHTTPSKeyFile, "k", "", "path to https key file")
 	regBoolVar(&o.flagEnableHTTPS, "s", false, "enable https")
+	regStringVar(&o.flagJWTSigningKey, "j", "test_key", "jwt signing key")
 
 	// parse the arguments passed to the server into registered variables
 	flag.Parse()
@@ -40,6 +41,10 @@ func (o *Options) ParseFlags() {
 
 	if envLogLevel := os.Getenv("LOG_LEVEL"); envLogLevel != "" {
 		o.flagLogLevel = envLogLevel
+	}
+
+	if envJWTSigningKey := os.Getenv("JWT_SIGNING_KEY"); envJWTSigningKey != "" {
+		o.flagJWTSigningKey = envJWTSigningKey
 	}
 
 	if envHTTPSCertFile := os.Getenv("HTTPS_CERT_FILE"); envHTTPSCertFile != "" {
@@ -73,6 +78,11 @@ func (o *Options) DataBaseDSN() string {
 
 func (o *Options) LogLevel() string {
 	return getStringFlag("l")
+}
+
+// JWTSigningKey returns the configured JWT signing key.
+func (o *Options) JWTSigningKey() string {
+	return getStringFlag("j")
 }
 
 // HTTPSCertFile returns the path to HTTPS cert file.
