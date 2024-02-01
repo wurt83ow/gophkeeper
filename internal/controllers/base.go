@@ -16,11 +16,29 @@ import (
 // PostAddDataTableUserIDJSONBody defines parameters for PostAddDataTableUserID.
 type PostAddDataTableUserIDJSONBody map[string]string
 
+// PostLoginJSONBody defines parameters for PostLogin.
+type PostLoginJSONBody struct {
+	Password *string `json:"password,omitempty"`
+	Username *string `json:"username,omitempty"`
+}
+
+// PostRegisterJSONBody defines parameters for PostRegister.
+type PostRegisterJSONBody struct {
+	Password *string `json:"password,omitempty"`
+	Username *string `json:"username,omitempty"`
+}
+
 // PutUpdateDataTableUserIDIdJSONBody defines parameters for PutUpdateDataTableUserIDId.
 type PutUpdateDataTableUserIDIdJSONBody map[string]string
 
 // PostAddDataTableUserIDJSONRequestBody defines body for PostAddDataTableUserID for application/json ContentType.
 type PostAddDataTableUserIDJSONRequestBody PostAddDataTableUserIDJSONBody
+
+// PostLoginJSONRequestBody defines body for PostLogin for application/json ContentType.
+type PostLoginJSONRequestBody PostLoginJSONBody
+
+// PostRegisterJSONRequestBody defines body for PostRegister for application/json ContentType.
+type PostRegisterJSONRequestBody PostRegisterJSONBody
 
 // PutUpdateDataTableUserIDIdJSONRequestBody defines body for PutUpdateDataTableUserIDId for application/json ContentType.
 type PutUpdateDataTableUserIDIdJSONRequestBody PutUpdateDataTableUserIDIdJSONBody
@@ -48,6 +66,12 @@ type ServerInterface interface {
 
 	// (GET /getUserID/{username})
 	GetGetUserIDUsername(w http.ResponseWriter, r *http.Request, username string)
+
+	// (POST /login)
+	PostLogin(w http.ResponseWriter, r *http.Request)
+
+	// (POST /register)
+	PostRegister(w http.ResponseWriter, r *http.Request)
 
 	// (POST /sendFile/{userID})
 	PostSendFileUserID(w http.ResponseWriter, r *http.Request, userID int)
@@ -148,6 +172,16 @@ func (h *BaseController) GetGetPasswordUsername(w http.ResponseWriter, r *http.R
 
 // (GET /getUserID/{username})
 func (h *BaseController) GetGetUserIDUsername(w http.ResponseWriter, r *http.Request, username string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /login)
+func (h *BaseController) PostLogin(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /register)
+func (h *BaseController) PostRegister(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -406,6 +440,36 @@ func (siw *ServerInterfaceWrapper) GetGetUserIDUsername(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// PostLogin operation middleware
+func (siw *ServerInterfaceWrapper) PostLogin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostLogin(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// PostRegister operation middleware
+func (siw *ServerInterfaceWrapper) PostRegister(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostRegister(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // PostSendFileUserID operation middleware
 func (siw *ServerInterfaceWrapper) PostSendFileUserID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -609,6 +673,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/getUserID/{username}", wrapper.GetGetUserIDUsername)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/login", wrapper.PostLogin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/register", wrapper.PostRegister)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/sendFile/{userID}", wrapper.PostSendFileUserID)
