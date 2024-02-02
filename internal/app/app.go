@@ -51,7 +51,7 @@ func (server *Server) Serve() {
 
 	// create a new controller to process incoming requests
 	//basecontr := initializeBaseController(memoryStorage, option, nLogger, authz)
-	basecontr := initializeBaseController(memoryStorage, option, nLogger)
+	basecontr := initializeBaseController(memoryStorage, option, nLogger, authz)
 
 	// Создайте экземпляр ChiServerOptions с вашим middleware
 	options := controllers.ChiServerOptions{
@@ -91,9 +91,9 @@ func initializeStorage(keeper storage.Keeper, logger *logger.Logger) *storage.Me
 }
 
 func initializeBaseController(storage *storage.MemoryStorage, options *config.Options,
-	logger *logger.Logger,
+	logger *logger.Logger, authz *authz.JWTAuthz,
 ) *controllers.BaseController {
-	return controllers.NewBaseController(storage, options, logger)
+	return controllers.NewBaseController(storage, options, logger, authz)
 }
 
 func startServer(router chi.Router, address string) {
