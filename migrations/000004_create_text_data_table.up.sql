@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS TextData (
-    id SERIAL PRIMARY KEY,
+    id TEXT PRIMARY KEY,
     user_id INTEGER,
     data TEXT NOT NULL,
     meta_info TEXT,

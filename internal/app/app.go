@@ -71,7 +71,7 @@ func (server *Server) Serve() {
 	r.Mount("/", genHandler)
 
 	// configure and start the server
-	startServer(r, option.RunAddr())
+	startServer(server, r, option.RunAddr())
 }
 
 func initializeKeeper(dataBaseDSN func() string, logger *logger.Logger) *bdkeeper.BDKeeper {
@@ -96,13 +96,13 @@ func initializeBaseController(storage *storage.MemoryStorage, options *config.Op
 	return controllers.NewBaseController(storage, options, logger, authz)
 }
 
-func startServer(router chi.Router, address string) {
+func startServer(server *Server, router chi.Router, address string) {
 	const (
 		oneMegabyte = 1 << 20
 		readTimeout = 3 * time.Second
 	)
 
-	server := &http.Server{
+	server.srv = &http.Server{
 		Addr:                         address,
 		Handler:                      router,
 		ReadHeaderTimeout:            readTimeout,
@@ -120,11 +120,10 @@ func startServer(router chi.Router, address string) {
 	}
 
 	log.Printf("Starting server at %s\n", address)
-	err := server.ListenAndServe()
+	err := server.srv.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalln(err)
 	}
-
 }
 
 func (server *Server) Shutdown() {

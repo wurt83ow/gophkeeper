@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS UserCredentials (
-    id SERIAL PRIMARY KEY,
+    id TEXT PRIMARY KEY,
     user_id INTEGER,
     login TEXT NOT NULL,
     password TEXT NOT NULL,

@@ -148,7 +148,25 @@ func NewBaseController(storage Storage, options Options, log Log, authz Authz) *
 
 // (POST /addData/{table}/{userID})
 func (h *BaseController) PostAddDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int) {
-	w.WriteHeader(http.StatusNotImplemented)
+	fmt.Println("222222222222222222222222222222222222222222222222222222222", table, userID)
+	// Parse and decode the request body into a new 'map[string]string' value
+	var requestBody map[string]string
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Call the 'AddData' method with the userID, table, and data from the request body
+	err = h.storage.AddData(r.Context(), userID, table, requestBody)
+	if err != nil {
+		fmt.Println("444444444444444444444444444444444444444444444444444444444", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// If everything goes well, respond with a status of '200 OK'
+	w.WriteHeader(http.StatusOK)
 }
 
 // (DELETE /clearData/{table}/{userID})
@@ -202,13 +220,11 @@ func (h *BaseController) PostLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if hashedPassword != requestBody.Password {
-		fmt.Println("sdffffffffffffffffffffffffffffffffffffffffffffffffffff", hashedPassword, requestBody.Password)
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
 	userID, err := h.storage.GetUserID(ctx, requestBody.Username)
-	fmt.Println("sdffffffffffffffffffffffffffffffffffffffffffffffffffff", userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -223,8 +239,6 @@ func (h *BaseController) PostLogin(w http.ResponseWriter, r *http.Request) {
 		"token":  token,
 	}
 
-	fmt.Println("1111111111111111111111111", userID)
-	fmt.Println("2222222222222222222222222", token)
 	// Convert the response to JSON
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
@@ -305,11 +319,11 @@ func (siw *ServerInterfaceWrapper) PostAddDataTableUserID(w http.ResponseWriter,
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostAddDataTableUserID(w, r, table, userID)
 	}))
-
+	fmt.Println("ddddddddddddddsssssssssssssssssssssssssssssssssssssssssssssssssssss")
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
 	}
-
+	fmt.Println("244444444444444444444444444444444466666666666666666666666666666666666")
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 

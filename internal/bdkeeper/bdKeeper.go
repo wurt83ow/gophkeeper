@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -177,7 +178,14 @@ func (bdk *BDKeeper) AddData(ctx context.Context, user_id int, table string, dat
 		keys = append(keys, key)
 		values = append(values, value)
 	}
-	stmt, err := bdk.conn.Prepare(fmt.Sprintf("INSERT INTO %s(%s) values(%s)", table, strings.Join(keys, ","), strings.Repeat("$?,", len(keys)-1)+"$?"))
+
+	// Создаем подстановочные знаки для значений
+	placeholders := make([]string, len(values))
+	for i := range values {
+		placeholders[i] = "$" + strconv.Itoa(i+1)
+	}
+
+	stmt, err := bdk.conn.Prepare(fmt.Sprintf("INSERT INTO %s(%s) values(%s)", table, strings.Join(keys, ","), strings.Join(placeholders, ",")))
 	if err != nil {
 		return err
 	}
@@ -186,14 +194,20 @@ func (bdk *BDKeeper) AddData(ctx context.Context, user_id int, table string, dat
 }
 
 func (bdk *BDKeeper) UpdateData(ctx context.Context, user_id int, id int, table string, data map[string]string) error {
-	keys := make([]string, 0, len(data))
-	values := make([]interface{}, 0, len(data))
+	setClauses := make([]string, 0, len(data))
+	values := make([]interface{}, 0, len(data)+2) // +2 для user_id и id
+
+	i := 1
 	for key, value := range data {
-		keys = append(keys, key+" = $?")
+		setClauses = append(setClauses, key+" = $"+strconv.Itoa(i))
 		values = append(values, value)
+		i++
 	}
+
+	// Добавьте user_id и id в конец списка значений
 	values = append(values, user_id, id)
-	stmt, err := bdk.conn.Prepare(fmt.Sprintf("UPDATE %s SET %s WHERE user_id = $? AND id = $?", table, strings.Join(keys, ",")))
+
+	stmt, err := bdk.conn.Prepare(fmt.Sprintf("UPDATE %s SET %s WHERE user_id = $%d AND id = $%d", table, strings.Join(setClauses, ","), i, i+1))
 	if err != nil {
 		return err
 	}

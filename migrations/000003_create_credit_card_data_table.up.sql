@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS CreditCardData (
-    id SERIAL PRIMARY KEY,
+    id TEXT PRIMARY KEY,
     user_id INTEGER,
     card_number TEXT NOT NULL,
     expiration_date TEXT NOT NULL,

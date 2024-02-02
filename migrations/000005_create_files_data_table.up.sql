@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS FilesData (
-    id SERIAL PRIMARY KEY,
+    id TEXT PRIMARY KEY,
     user_id INTEGER,
     path TEXT NOT NULL,
     meta_info TEXT,

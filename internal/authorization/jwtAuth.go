@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -54,35 +55,23 @@ func NewJWTAuthz(signingKey string, log Log) *JWTAuthz {
 func (j *JWTAuthz) JWTAuthzMiddleware(storage Storage, log Log) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			// Grab jwt-token cookie
-			jwtCookie, err := r.Cookie("jwt-token")
-
 			var userID string
-			if err == nil {
-				userID, err = j.DecodeJWTToUser(jwtCookie.Value)
+			var err error
+
+			jwtToken := r.Header.Get("Authorization")
+			fmt.Println("777777777777777777777777777777777777777777777777777777", jwtToken)
+			if jwtToken != "" {
+				userID, err = j.DecodeJWTToUser(jwtToken)
+				fmt.Println("888888888888888888888888888888888888888", userID)
 				if err != nil {
 					userID = ""
-					log.Info("Error occurred creating a cookie", zap.Error(err))
-				}
-			} else {
-				log.Info("Error occurred reading cookie", zap.Error(err))
-			}
-
-			if userID == "" {
-				jwtCookie := r.Header.Get("Authorization")
-
-				if jwtCookie != "" {
-					userID, err = j.DecodeJWTToUser(jwtCookie)
-
-					if err != nil {
-						userID = ""
-						log.Info("Error occurred creating a cookie", zap.Error(err))
-					}
+					log.Info("Error occurred decoding JWT token", zap.Error(err))
 				}
 			}
 
 			// If userID is still empty, return an authorization error
 			if userID == "" {
+				fmt.Println("99999999999999999999999999999999999999999999999999", userID)
 				http.Error(w, "Authorization error", http.StatusUnauthorized)
 				return
 			}
