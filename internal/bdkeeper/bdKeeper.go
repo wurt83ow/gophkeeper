@@ -166,13 +166,13 @@ func (bdk *BDKeeper) GetUserID(ctx context.Context, username string) (int, error
 	return id, nil
 }
 
-func (bdk *BDKeeper) AddData(ctx context.Context, user_id int, table string, data map[string]string) error {
-	keys := make([]string, 0, len(data)+1)        // +1 для user_id
-	values := make([]interface{}, 0, len(data)+1) // +1 для user_id
+func (bdk *BDKeeper) AddData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error {
+	keys := make([]string, 0, len(data)+2)        // +2 для user_id и entry_id
+	values := make([]interface{}, 0, len(data)+2) // +2 для user_id и entry_id
 
-	// Добавьте user_id в начало списков ключей и значений
-	keys = append(keys, "user_id")
-	values = append(values, user_id)
+	// Добавьте user_id и entry_id в начало списков ключей и значений
+	keys = append(keys, "user_id", "entry_id")
+	values = append(values, user_id, entry_id)
 
 	for key, value := range data {
 		keys = append(keys, key)
@@ -193,7 +193,7 @@ func (bdk *BDKeeper) AddData(ctx context.Context, user_id int, table string, dat
 	return err
 }
 
-func (bdk *BDKeeper) UpdateData(ctx context.Context, user_id int, id int, table string, data map[string]string) error {
+func (bdk *BDKeeper) UpdateData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error {
 	setClauses := make([]string, 0, len(data))
 	values := make([]interface{}, 0, len(data)+2) // +2 для user_id и id
 
@@ -205,7 +205,7 @@ func (bdk *BDKeeper) UpdateData(ctx context.Context, user_id int, id int, table 
 	}
 
 	// Добавьте user_id и id в конец списка значений
-	values = append(values, user_id, id)
+	values = append(values, user_id, entry_id)
 
 	stmt, err := bdk.conn.Prepare(fmt.Sprintf("UPDATE %s SET %s WHERE user_id = $%d AND id = $%d", table, strings.Join(setClauses, ","), i, i+1))
 	if err != nil {
@@ -215,20 +215,20 @@ func (bdk *BDKeeper) UpdateData(ctx context.Context, user_id int, id int, table 
 	return err
 }
 
-func (bdk *BDKeeper) DeleteData(ctx context.Context, user_id int, table string, id string) error {
+func (bdk *BDKeeper) DeleteData(ctx context.Context, table string, user_id int, entry_id string) error {
 	// Check user_id and table
 	if user_id == 0 || table == "" {
 		return errors.New("user_id and table must be specified")
 	}
 
 	// Check id
-	if id == "" {
+	if entry_id == "" {
 		return errors.New("id must be specified")
 	}
 
 	// Prepare the query
 	query := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE user_id = $1 AND id = $2", table)
-	args := []interface{}{user_id, id}
+	args := []interface{}{user_id, entry_id}
 
 	// Execute the query
 	row := bdk.conn.QueryRowContext(ctx, query, args...)
@@ -251,7 +251,7 @@ func (bdk *BDKeeper) DeleteData(ctx context.Context, user_id int, table string, 
 	return err
 }
 
-func (bdk *BDKeeper) GetData(ctx context.Context, user_id int, table string, id int) (map[string]string, error) {
+func (bdk *BDKeeper) GetData(ctx context.Context, table string, user_id int, entry_id string) (map[string]string, error) {
 	// Получаем все колонки таблицы
 	rows, err := bdk.conn.QueryContext(ctx, fmt.Sprintf("SELECT column_name FROM information_schema.columns WHERE table_name = '%s'", table))
 	if err != nil {
@@ -271,7 +271,7 @@ func (bdk *BDKeeper) GetData(ctx context.Context, user_id int, table string, id 
 		}
 	}
 
-	row := bdk.conn.QueryRowContext(ctx, fmt.Sprintf("SELECT %s FROM %s WHERE id = $1 AND deleted = false", strings.Join(cols, ","), table), id)
+	row := bdk.conn.QueryRowContext(ctx, fmt.Sprintf("SELECT %s FROM %s WHERE id = $1 AND deleted = false", strings.Join(cols, ","), table), entry_id)
 	values := make([]interface{}, len(cols))
 	for i := range values {
 		var value string
@@ -323,7 +323,7 @@ func (bdk *BDKeeper) GetAllData(ctx context.Context, table string, columns ...st
 	return data, nil
 }
 
-func (bdk *BDKeeper) ClearData(ctx context.Context, userID int, table string) error {
+func (bdk *BDKeeper) ClearData(ctx context.Context, table string, userID int) error {
 	stmt, err := bdk.conn.Prepare(fmt.Sprintf("DELETE FROM %s WHERE user_id = $1", table))
 	if err != nil {
 		return err

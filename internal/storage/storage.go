@@ -26,12 +26,12 @@ type Keeper interface {
 	AddUser(ctx context.Context, username string, hashedPassword string) error
 	GetPassword(ctx context.Context, username string) (string, error)
 	GetUserID(ctx context.Context, username string) (int, error)
-	AddData(ctx context.Context, user_id int, table string, data map[string]string) error
-	UpdateData(ctx context.Context, user_id int, id int, table string, data map[string]string) error
-	DeleteData(ctx context.Context, user_id int, table string, id string) error
-	GetData(ctx context.Context, user_id int, table string, id int) (map[string]string, error)
+	AddData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error
+	UpdateData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error
+	DeleteData(ctx context.Context, table string, user_id int, entry_id string) error
+	GetData(ctx context.Context, table string, user_id int, entry_id string) (map[string]string, error)
 	GetAllData(ctx context.Context, table string, columns ...string) ([]map[string]string, error)
-	ClearData(ctx context.Context, userID int, table string) error
+	ClearData(ctx context.Context, table string, userID int) error
 }
 
 // NewMemoryStorage creates a new MemoryStorage instance with the provided Keeper and logger.
@@ -58,20 +58,20 @@ func (ms *MemoryStorage) GetUserID(ctx context.Context, username string) (int, e
 	return ms.keeper.GetUserID(ctx, username)
 }
 
-func (ms *MemoryStorage) AddData(ctx context.Context, user_id int, table string, data map[string]string) error {
-	return ms.keeper.AddData(ctx, user_id, table, data)
+func (ms *MemoryStorage) AddData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error {
+	return ms.keeper.AddData(ctx, table, user_id, entry_id, data)
 }
 
-func (ms *MemoryStorage) UpdateData(ctx context.Context, user_id int, id int, table string, data map[string]string) error {
-	return ms.keeper.UpdateData(ctx, user_id, id, table, data)
+func (ms *MemoryStorage) UpdateData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error {
+	return ms.keeper.UpdateData(ctx, table, user_id, entry_id, data)
 }
 
-func (ms *MemoryStorage) DeleteData(ctx context.Context, user_id int, table string, id string) error {
-	return ms.keeper.DeleteData(ctx, user_id, table, id)
+func (ms *MemoryStorage) DeleteData(ctx context.Context, table string, user_id int, entry_id string) error {
+	return ms.keeper.DeleteData(ctx, table, user_id, entry_id)
 }
 
-func (ms *MemoryStorage) GetData(ctx context.Context, user_id int, table string, id int) (map[string]string, error) {
-	return ms.keeper.GetData(ctx, user_id, table, id)
+func (ms *MemoryStorage) GetData(ctx context.Context, table string, user_id int, entry_id string) (map[string]string, error) {
+	return ms.keeper.GetData(ctx, table, user_id, entry_id)
 }
 
 func (ms *MemoryStorage) GetAllData(ctx context.Context, table string, columns ...string) ([]map[string]string, error) {
@@ -79,5 +79,5 @@ func (ms *MemoryStorage) GetAllData(ctx context.Context, table string, columns .
 }
 
 func (ms *MemoryStorage) ClearData(ctx context.Context, userID int, table string) error {
-	return ms.keeper.ClearData(ctx, userID, table)
+	return ms.keeper.ClearData(ctx, table, userID)
 }
