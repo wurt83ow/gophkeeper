@@ -167,11 +167,12 @@ func (bdk *BDKeeper) GetUserID(ctx context.Context, username string) (int, error
 }
 
 func (bdk *BDKeeper) AddData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error {
+	 
 	keys := make([]string, 0, len(data)+2)        // +2 для user_id и entry_id
 	values := make([]interface{}, 0, len(data)+2) // +2 для user_id и entry_id
 
 	// Добавьте user_id и entry_id в начало списков ключей и значений
-	keys = append(keys, "user_id", "entry_id")
+	keys = append(keys, "user_id", "id")
 	values = append(values, user_id, entry_id)
 
 	for key, value := range data {
@@ -190,6 +191,7 @@ func (bdk *BDKeeper) AddData(ctx context.Context, table string, user_id int, ent
 		return err
 	}
 	_, err = stmt.ExecContext(ctx, values...)
+	 
 	return err
 }
 

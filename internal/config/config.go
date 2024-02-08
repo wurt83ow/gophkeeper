@@ -3,13 +3,15 @@ package config
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 )
 
 type Options struct {
 	flagRunAddr, flagDataBaseDSN, flagLogLevel,
-	flagHTTPSCertFile, flagHTTPSKeyFile, flagJWTSigningKey string
+	flagHTTPSCertFile, flagHTTPSKeyFile, flagJWTSigningKey, flagFileStoragePath string
 	flagEnableHTTPS bool
 }
 
@@ -27,6 +29,7 @@ func (o *Options) ParseFlags() {
 	regStringVar(&o.flagHTTPSKeyFile, "k", "", "path to https key file")
 	regBoolVar(&o.flagEnableHTTPS, "s", false, "enable https")
 	regStringVar(&o.flagJWTSigningKey, "j", "test_key", "jwt signing key")
+	regStringVar(&o.flagFileStoragePath, "n", "", "file storage path")
 
 	// parse the arguments passed to the server into registered variables
 	flag.Parse()
@@ -45,6 +48,10 @@ func (o *Options) ParseFlags() {
 
 	if envJWTSigningKey := os.Getenv("JWT_SIGNING_KEY"); envJWTSigningKey != "" {
 		o.flagJWTSigningKey = envJWTSigningKey
+	}
+
+	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
+		o.flagFileStoragePath = envFileStoragePath
 	}
 
 	if envHTTPSCertFile := os.Getenv("HTTPS_CERT_FILE"); envHTTPSCertFile != "" {
@@ -78,6 +85,26 @@ func (o *Options) DataBaseDSN() string {
 
 func (o *Options) LogLevel() string {
 	return getStringFlag("l")
+}
+
+func (o *Options) FileStoragePath() string {
+	fileStoragePath := getStringFlag("n")
+	if fileStoragePath == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fileStoragePath = filepath.Join(home, "gkeeper_server")
+
+		// Создание каталога gkeeper, если он не существует
+		if _, err := os.Stat(fileStoragePath); os.IsNotExist(err) {
+			err = os.Mkdir(fileStoragePath, 0755)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+	return fileStoragePath
 }
 
 // JWTSigningKey returns the configured JWT signing key.

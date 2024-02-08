@@ -7,7 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -76,7 +79,7 @@ type ServerInterface interface {
 	PostRegister(w http.ResponseWriter, r *http.Request)
 
 	// (POST /sendFile/{userID})
-	PostSendFileUserID(w http.ResponseWriter, r *http.Request, userID int)
+	PostSendFileUserID(w http.ResponseWriter, r *http.Request, userID int, fileName string)
 
 	// (PUT /updateData/{table}/{userID}/{entryID})
 	PutUpdateDataTableUserIDEntryID(w http.ResponseWriter, r *http.Request, table string, userID int, entryID string)
@@ -105,6 +108,8 @@ type Options interface {
 
 	// RunAddr returns the address to run the application.
 	RunAddr() string
+
+	FileStoragePath() string
 }
 
 // Log represents an interface for logging functionality.
@@ -147,7 +152,7 @@ func NewBaseController(storage Storage, options Options, log Log, authz Authz) *
 
 // (POST /addData/{table}/{userID}/{entryID})
 func (h *BaseController) PostAddDataTableUserIDEntryID(w http.ResponseWriter, r *http.Request, table string, userID int, entryID string) {
-	fmt.Println("222222222222222222222222222222222222222222222222222222222", table, userID)
+
 	// Parse and decode the request body into a new 'map[string]string' value
 	var requestBody map[string]string
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
@@ -159,7 +164,6 @@ func (h *BaseController) PostAddDataTableUserIDEntryID(w http.ResponseWriter, r 
 	// Call the 'AddData' method with the userID, table, and data from the request body
 	err = h.storage.AddData(r.Context(), table, userID, entryID, requestBody)
 	if err != nil {
-		fmt.Println("444444444444444444444444444444444444444444444444444444444", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -185,7 +189,18 @@ func (h *BaseController) GetGetDataTableUserIDEntryID(w http.ResponseWriter, r *
 
 // (GET /getFile/{userID}/{entryID})
 func (h *BaseController) GetGetFileUserIDEntryID(w http.ResponseWriter, r *http.Request, userID int, entryID string) {
-	w.WriteHeader(http.StatusNotImplemented)
+
+	// Путь к файлу
+	filePath := filepath.Join(h.options.FileStoragePath(), entryID)
+	fmt.Println("88888888888888888888888888888888888sssssssssssssssssssssssssssssssssssssss", filePath)
+	// Проверка существования файла
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		http.Error(w, "Файл не найден", http.StatusNotFound)
+		return
+	}
+
+	// Отправка файла
+	http.ServeFile(w, r, filePath)
 }
 
 // (GET /getPassword/{username})
@@ -217,8 +232,6 @@ func (h *BaseController) PostLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if hashedPassword != requestBody.Password {
-		fmt.Println("hashedPassword      ", hashedPassword)
-		fmt.Println("requestBody.Password", requestBody.Password)
 		err := fmt.Errorf("Unauthorized")
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -274,8 +287,28 @@ func (h *BaseController) PostRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 // (POST /sendFile/{userID})
-func (h *BaseController) PostSendFileUserID(w http.ResponseWriter, r *http.Request, userID int) {
-	w.WriteHeader(http.StatusNotImplemented)
+// (POST /sendFile/{userID})
+func (h *BaseController) PostSendFileUserID(w http.ResponseWriter, r *http.Request, userID int, fileName string) {
+	fmt.Println("77777777777777777777777777777777777777777", h.options.FileStoragePath())
+	// Чтение файла из тела запроса
+	file, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Ошибка при чтении файла", http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	// Сохранение файла на сервере
+	path := filepath.Join(h.options.FileStoragePath(), fileName)
+	err = os.WriteFile(path, file, 0644)
+	if err != nil {
+		http.Error(w, "Ошибка при сохранении файла", http.StatusInternalServerError)
+		return
+	}
+
+	// Отправка ответа
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Файл успешно сохранен")
 }
 
 // (PUT /updateData/{table}/{userID}/{entryID})
@@ -583,8 +616,17 @@ func (siw *ServerInterfaceWrapper) PostSendFileUserID(w http.ResponseWriter, r *
 		return
 	}
 
+	// ------------- Path parameter "fileName" -------------
+	var fileName string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fileName", chi.URLParam(r, "fileName"), &fileName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fileName", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PostSendFileUserID(w, r, userID)
+		siw.Handler.PostSendFileUserID(w, r, userID, fileName)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -779,7 +821,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/register", wrapper.PostRegister)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/sendFile/{userID}", wrapper.PostSendFileUserID)
+		r.Post(options.BaseURL+"/sendFile/{userID}/{fileName}", wrapper.PostSendFileUserID)
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/updateData/{table}/{userID}/{entryID}", wrapper.PutUpdateDataTableUserIDEntryID)

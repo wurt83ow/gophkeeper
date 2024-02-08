@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -59,10 +58,10 @@ func (j *JWTAuthz) JWTAuthzMiddleware(storage Storage, log Log) func(next http.H
 			var err error
 
 			jwtToken := r.Header.Get("Authorization")
-			fmt.Println("777777777777777777777777777777777777777777777777777777", jwtToken)
+
 			if jwtToken != "" {
 				userID, err = j.DecodeJWTToUser(jwtToken)
-				fmt.Println("888888888888888888888888888888888888888", userID)
+
 				if err != nil {
 					userID = ""
 					log.Info("Error occurred decoding JWT token", zap.Error(err))
@@ -71,7 +70,7 @@ func (j *JWTAuthz) JWTAuthzMiddleware(storage Storage, log Log) func(next http.H
 
 			// If userID is still empty, return an authorization error
 			if userID == "" {
-				fmt.Println("99999999999999999999999999999999999999999999999999", userID)
+
 				http.Error(w, "Authorization error", http.StatusUnauthorized)
 				return
 			}
