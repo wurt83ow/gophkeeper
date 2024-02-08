@@ -271,7 +271,7 @@ func (bdk *BDKeeper) GetData(ctx context.Context, table string, user_id int, ent
 		}
 	}
 
-	row := bdk.conn.QueryRowContext(ctx, fmt.Sprintf("SELECT %s FROM %s WHERE id = $1 AND deleted = false", strings.Join(cols, ","), table), entry_id)
+	row := bdk.conn.QueryRowContext(ctx, fmt.Sprintf("SELECT %s FROM %s WHERE id = $1", strings.Join(cols, ","), table), entry_id)
 	values := make([]interface{}, len(cols))
 	for i := range values {
 		var value string
