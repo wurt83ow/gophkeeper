@@ -97,8 +97,7 @@ type Storage interface {
 	AddData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error
 	UpdateData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error
 	DeleteData(ctx context.Context, table string, user_id int, entry_id string) error
-	GetData(ctx context.Context, table string, user_id int, entry_id string) (map[string]string, error)
-	GetAllData(ctx context.Context, table string, columns ...string) ([]map[string]string, error)
+	GetAllData(ctx context.Context, table string, user_id int) ([]map[string]string, error)
 }
 
 // Options represents an interface for parsing command line options.
@@ -122,6 +121,8 @@ type Log interface {
 type Authz interface {
 	// CreateJWTTokenForUser creates a JWT token for a specified user ID.
 	CreateJWTTokenForUser(userID string) string
+	IsBcryptHash(s string) bool
+	CompareHashAndPassword(hashedPassword, password string) bool
 }
 
 // BaseController represents a basic controller for handling user requests.
@@ -177,9 +178,24 @@ func (h *BaseController) DeleteDeleteDataTableUserIDEntryID(w http.ResponseWrite
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// (GET /getAllData/{table}/{userID})
 func (h *BaseController) GetGetAllDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int) {
-	w.WriteHeader(http.StatusNotImplemented)
+	// Получение данных из БД
+	data, err := h.storage.GetAllData(r.Context(), table, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Преобразование данных в JSON
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Отправка данных
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
 }
 
 // (GET /getData/{table}/{userID}/{entryID})
@@ -192,7 +208,6 @@ func (h *BaseController) GetGetFileUserIDEntryID(w http.ResponseWriter, r *http.
 
 	// Путь к файлу
 	filePath := filepath.Join(h.options.FileStoragePath(), entryID)
-	fmt.Println("88888888888888888888888888888888888sssssssssssssssssssssssssssssssssssssss", filePath)
 	// Проверка существования файла
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		http.Error(w, "Файл не найден", http.StatusNotFound)
@@ -210,7 +225,25 @@ func (h *BaseController) GetGetPasswordUsername(w http.ResponseWriter, r *http.R
 
 // (GET /getUserID/{username})
 func (h *BaseController) GetGetUserIDUsername(w http.ResponseWriter, r *http.Request, username string) {
-	w.WriteHeader(http.StatusNotImplemented)
+	// Получаем UserID из базы данных
+	userID, err := h.storage.GetUserID(r.Context(), username)
+	if err != nil {
+		// Если произошла ошибка, отправляем статус 500 и сообщение об ошибке
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Преобразуем UserID в JSON
+	userIDJSON, err := json.Marshal(userID)
+	if err != nil {
+		// Если произошла ошибка, отправляем статус 500 и сообщение об ошибке
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Устанавливаем заголовок Content-Type и отправляем UserID в ответе
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(userIDJSON)
 }
 
 // (POST /login)
@@ -231,10 +264,20 @@ func (h *BaseController) PostLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	if hashedPassword != requestBody.Password {
-		err := fmt.Errorf("Unauthorized")
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
+
+	if h.authz.IsBcryptHash(requestBody.Password) {
+		if hashedPassword != requestBody.Password {
+			err := fmt.Errorf("Unauthorized")
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+	} else {
+		// Сравнение хешированного пароля с хешем введенного пароля
+		if !h.authz.CompareHashAndPassword(hashedPassword, requestBody.Password) {
+			err := fmt.Errorf("Unauthorized")
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
 	}
 
 	userID, err := h.storage.GetUserID(ctx, requestBody.Username)
@@ -289,7 +332,6 @@ func (h *BaseController) PostRegister(w http.ResponseWriter, r *http.Request) {
 // (POST /sendFile/{userID})
 // (POST /sendFile/{userID})
 func (h *BaseController) PostSendFileUserID(w http.ResponseWriter, r *http.Request, userID int, fileName string) {
-	fmt.Println("77777777777777777777777777777777777777777", h.options.FileStoragePath())
 	// Чтение файла из тела запроса
 	file, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -571,10 +613,6 @@ func (siw *ServerInterfaceWrapper) GetGetUserIDUsername(w http.ResponseWriter, r
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetGetUserIDUsername(w, r, username)
 	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }

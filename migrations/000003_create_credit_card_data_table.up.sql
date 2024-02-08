@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS CreditCardData (
     user_id INTEGER,
     card_number TEXT NOT NULL,
     expiration_date TEXT NOT NULL,
-    cvv INTEGER NOT NULL,
+    cvv TEXT NOT NULL,
     meta_info TEXT,   
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES Users(id)

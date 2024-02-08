@@ -29,8 +29,7 @@ type Keeper interface {
 	AddData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error
 	UpdateData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error
 	DeleteData(ctx context.Context, table string, user_id int, entry_id string) error
-	GetData(ctx context.Context, table string, user_id int, entry_id string) (map[string]string, error)
-	GetAllData(ctx context.Context, table string, columns ...string) ([]map[string]string, error)
+	GetAllData(ctx context.Context, table string, user_id int) ([]map[string]string, error)
 	ClearData(ctx context.Context, table string, userID int) error
 }
 
@@ -70,12 +69,8 @@ func (ms *MemoryStorage) DeleteData(ctx context.Context, table string, user_id i
 	return ms.keeper.DeleteData(ctx, table, user_id, entry_id)
 }
 
-func (ms *MemoryStorage) GetData(ctx context.Context, table string, user_id int, entry_id string) (map[string]string, error) {
-	return ms.keeper.GetData(ctx, table, user_id, entry_id)
-}
-
-func (ms *MemoryStorage) GetAllData(ctx context.Context, table string, columns ...string) ([]map[string]string, error) {
-	return ms.keeper.GetAllData(ctx, table, columns...)
+func (ms *MemoryStorage) GetAllData(ctx context.Context, table string, user_id int) ([]map[string]string, error) {
+	return ms.keeper.GetAllData(ctx, table, user_id)
 }
 
 func (ms *MemoryStorage) ClearData(ctx context.Context, userID int, table string) error {

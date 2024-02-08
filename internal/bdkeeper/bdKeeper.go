@@ -167,7 +167,7 @@ func (bdk *BDKeeper) GetUserID(ctx context.Context, username string) (int, error
 }
 
 func (bdk *BDKeeper) AddData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error {
-	 
+
 	keys := make([]string, 0, len(data)+2)        // +2 для user_id и entry_id
 	values := make([]interface{}, 0, len(data)+2) // +2 для user_id и entry_id
 
@@ -191,7 +191,7 @@ func (bdk *BDKeeper) AddData(ctx context.Context, table string, user_id int, ent
 		return err
 	}
 	_, err = stmt.ExecContext(ctx, values...)
-	 
+
 	return err
 }
 
@@ -253,9 +253,9 @@ func (bdk *BDKeeper) DeleteData(ctx context.Context, table string, user_id int, 
 	return err
 }
 
-func (bdk *BDKeeper) GetData(ctx context.Context, table string, user_id int, entry_id string) (map[string]string, error) {
+func (bdk *BDKeeper) GetAllData(ctx context.Context, table string, user_id int) ([]map[string]string, error) {
 	// Получаем все колонки таблицы
-	rows, err := bdk.conn.QueryContext(ctx, fmt.Sprintf("SELECT column_name FROM information_schema.columns WHERE table_name = '%s'", table))
+	rows, err := bdk.conn.QueryContext(ctx, fmt.Sprintf(`SELECT column_name FROM information_schema.columns WHERE table_name = '%s'`, strings.ToLower(table)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get columns: %w", err)
 	}
@@ -267,41 +267,21 @@ func (bdk *BDKeeper) GetData(ctx context.Context, table string, user_id int, ent
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan column: %w", err)
 		}
-		// Исключаем ненужные столбцы
-		if col != "id" && col != "deleted" && col != "user_id" && col != "updated_at" {
-			cols = append(cols, col)
-		}
+
+		cols = append(cols, col)
 	}
 
-	row := bdk.conn.QueryRowContext(ctx, fmt.Sprintf("SELECT %s FROM %s WHERE id = $1", strings.Join(cols, ","), table), entry_id)
-	values := make([]interface{}, len(cols))
-	for i := range values {
-		var value string
-		values[i] = &value
-	}
-	err = row.Scan(values...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to scan row: %w", err)
-	}
-	data := make(map[string]string)
-	for i, column := range cols {
-		data[column] = *(values[i].(*string))
-	}
-	return data, nil
-}
-
-func (bdk *BDKeeper) GetAllData(ctx context.Context, table string, columns ...string) ([]map[string]string, error) {
-
-	rows, err := bdk.conn.QueryContext(ctx, fmt.Sprintf("SELECT %s FROM %s", strings.Join(columns, ","), table))
+	// Запрашиваем все данные из таблицы для данного user_id
+	rows, err = bdk.conn.QueryContext(ctx, fmt.Sprintf("SELECT %s FROM %s WHERE user_id = %d", strings.Join(cols, ","), table, user_id))
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
 	defer rows.Close()
 
-	values := make([]interface{}, len(columns))
+	values := make([]interface{}, len(cols))
 
 	for i := range values {
-		values[i] = new(sql.RawBytes)
+		values[i] = new(sql.NullString)
 	}
 
 	var data []map[string]string
@@ -312,9 +292,13 @@ func (bdk *BDKeeper) GetAllData(ctx context.Context, table string, columns ...st
 		}
 
 		row := make(map[string]string)
-		for i, column := range columns {
-			row[column] = string(*values[i].(*sql.RawBytes))
+		for i, column := range cols {
+			if ns, ok := values[i].(*sql.NullString); ok {
+				row[column] = ns.String
+
+			}
 		}
+
 		data = append(data, row)
 	}
 

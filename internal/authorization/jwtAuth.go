@@ -13,6 +13,7 @@ import (
 	"github.com/wurt83ow/gophkeeper-server/internal/models"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Storage is an interface representing methods for inserting user data.
@@ -143,4 +144,15 @@ func (j *JWTAuthz) AuthCookie(name string, token string) *http.Cookie {
 	d.Path = "/"
 
 	return &d
+}
+
+// IsBcryptHash проверяет, является ли данная строка хешем bcrypt.
+func (j *JWTAuthz) IsBcryptHash(s string) bool {
+	_, err := bcrypt.Cost([]byte(s))
+	return err == nil
+}
+
+func (j *JWTAuthz) CompareHashAndPassword(hashedPassword, password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	return err == nil
 }
