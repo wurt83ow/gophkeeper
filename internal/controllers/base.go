@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
@@ -97,7 +98,7 @@ type Storage interface {
 	AddData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error
 	UpdateData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error
 	DeleteData(ctx context.Context, table string, user_id int, entry_id string) error
-	GetAllData(ctx context.Context, table string, user_id int) ([]map[string]string, error)
+	GetAllData(ctx context.Context, table string, user_id int, last_sync time.Time, incl_del bool) ([]map[string]string, error)
 }
 
 // Options represents an interface for parsing command line options.
@@ -179,8 +180,20 @@ func (h *BaseController) DeleteDeleteDataTableUserIDEntryID(w http.ResponseWrite
 }
 
 func (h *BaseController) GetGetAllDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int) {
+	// Получите lastSync из параметров запроса
+	lastSyncStr := r.URL.Query().Get("lastSync")
+
+	// Преобразуйте lastSync обратно в time.Time
+	lastSync, err := time.Parse(time.RFC3339, lastSyncStr)
+	if err != nil {
+		http.Error(w, "Неверный формат lastSync: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	inclDel := !lastSync.IsZero()
+
 	// Получение данных из БД
-	data, err := h.storage.GetAllData(r.Context(), table, userID)
+	data, err := h.storage.GetAllData(r.Context(), table, userID, lastSync, inclDel)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

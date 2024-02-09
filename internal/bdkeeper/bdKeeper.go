@@ -253,7 +253,7 @@ func (bdk *BDKeeper) DeleteData(ctx context.Context, table string, user_id int, 
 	return err
 }
 
-func (bdk *BDKeeper) GetAllData(ctx context.Context, table string, user_id int) ([]map[string]string, error) {
+func (bdk *BDKeeper) GetAllData(ctx context.Context, table string, userID int, lastSync time.Time, inclDel bool) ([]map[string]string, error) {
 	// Получаем все колонки таблицы
 	rows, err := bdk.conn.QueryContext(ctx, fmt.Sprintf(`SELECT column_name FROM information_schema.columns WHERE table_name = '%s'`, strings.ToLower(table)))
 	if err != nil {
@@ -271,8 +271,17 @@ func (bdk *BDKeeper) GetAllData(ctx context.Context, table string, user_id int) 
 		cols = append(cols, col)
 	}
 
-	// Запрашиваем все данные из таблицы для данного user_id
-	rows, err = bdk.conn.QueryContext(ctx, fmt.Sprintf("SELECT %s FROM %s WHERE user_id = %d", strings.Join(cols, ","), table, user_id))
+	// Формируем условие для запроса
+	var condition string
+	if !inclDel {
+		condition += " AND deleted = false"
+	}
+	if !lastSync.IsZero() {
+		condition += fmt.Sprintf(" AND updated_at > '%s'", lastSync.Format(time.RFC3339))
+	}
+
+	// Запрашиваем все данные из таблицы для данного user_id с учетом условия
+	rows, err = bdk.conn.QueryContext(ctx, fmt.Sprintf("SELECT %s FROM %s WHERE user_id = %d%s", strings.Join(cols, ","), table, userID, condition))
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -295,7 +304,6 @@ func (bdk *BDKeeper) GetAllData(ctx context.Context, table string, user_id int) 
 		for i, column := range cols {
 			if ns, ok := values[i].(*sql.NullString); ok {
 				row[column] = ns.String
-
 			}
 		}
 

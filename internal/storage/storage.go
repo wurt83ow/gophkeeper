@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.uber.org/zap/zapcore"
 )
@@ -29,7 +30,7 @@ type Keeper interface {
 	AddData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error
 	UpdateData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error
 	DeleteData(ctx context.Context, table string, user_id int, entry_id string) error
-	GetAllData(ctx context.Context, table string, user_id int) ([]map[string]string, error)
+	GetAllData(ctx context.Context, table string, user_id int, last_sync time.Time, incl_del bool) ([]map[string]string, error)
 	ClearData(ctx context.Context, table string, userID int) error
 }
 
@@ -69,8 +70,8 @@ func (ms *MemoryStorage) DeleteData(ctx context.Context, table string, user_id i
 	return ms.keeper.DeleteData(ctx, table, user_id, entry_id)
 }
 
-func (ms *MemoryStorage) GetAllData(ctx context.Context, table string, user_id int) ([]map[string]string, error) {
-	return ms.keeper.GetAllData(ctx, table, user_id)
+func (ms *MemoryStorage) GetAllData(ctx context.Context, table string, user_id int, last_sync time.Time, incl_del bool) ([]map[string]string, error) {
+	return ms.keeper.GetAllData(ctx, table, user_id, last_sync, incl_del)
 }
 
 func (ms *MemoryStorage) ClearData(ctx context.Context, userID int, table string) error {
