@@ -58,8 +58,8 @@ type ServerInterface interface {
 	// (DELETE /deleteData/{table}/{userID}/{entryID})
 	DeleteDeleteDataTableUserIDEntryID(w http.ResponseWriter, r *http.Request, table string, userID int, entryID string)
 
-	// (GET /getAllData/{table}/{userID})
-	GetGetAllDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int)
+	// (GET /getAllData/{table}/{userID}/{lastSync})
+	GetGetAllDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int, lastSyncStr string)
 
 	// (GET /getData/{table}/{userID}/{entryID})
 	GetGetDataTableUserIDEntryID(w http.ResponseWriter, r *http.Request, table string, userID int, entryID string)
@@ -179,26 +179,25 @@ func (h *BaseController) DeleteDeleteDataTableUserIDEntryID(w http.ResponseWrite
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-func (h *BaseController) GetGetAllDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int) {
-	// Получите lastSync из параметров запроса
-	lastSyncStr := r.URL.Query().Get("lastSync")
-
+func (h *BaseController) GetGetAllDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int, lastSyncStr string) {
+	fmt.Println("sfdljk777777777777777777777777777777777777777")
 	// Преобразуйте lastSync обратно в time.Time
 	lastSync, err := time.Parse(time.RFC3339, lastSyncStr)
 	if err != nil {
 		http.Error(w, "Неверный формат lastSync: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-
+	fmt.Println("sfdljk7777777777777777777777777777777733333333333333", lastSync)
 	inclDel := !lastSync.IsZero()
 
 	// Получение данных из БД
 	data, err := h.storage.GetAllData(r.Context(), table, userID, lastSync, inclDel)
 	if err != nil {
+		fmt.Println("sfdljk777777777777777777777777777777777744444", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
+	fmt.Println("sfdljk7777777777777777777777777777777777755555555", data)
 	// Преобразование данных в JSON
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -492,8 +491,17 @@ func (siw *ServerInterfaceWrapper) GetGetAllDataTableUserID(w http.ResponseWrite
 		return
 	}
 
+	// ------------- Path parameter "lastSyncStr" -------------
+	var lastSyncStr string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "lastSyncStr", chi.URLParam(r, "lastSyncStr"), &lastSyncStr, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: false})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "lastSyncStr", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetGetAllDataTableUserID(w, r, table, userID)
+		siw.Handler.GetGetAllDataTableUserID(w, r, table, userID, lastSyncStr)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -851,7 +859,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Delete(options.BaseURL+"/deleteData/{table}/{userID}/{entryID}", wrapper.DeleteDeleteDataTableUserIDEntryID)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/getAllData/{table}/{userID}", wrapper.GetGetAllDataTableUserID)
+		r.Get(options.BaseURL+"/getAllData/{table}/{userID}/{lastSyncStr}", wrapper.GetGetAllDataTableUserID)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/getData/{table}/{userID}/{entryID}", wrapper.GetGetDataTableUserIDEntryID)
