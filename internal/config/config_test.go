@@ -71,11 +71,11 @@ func TestOptions_DefaultValues(t *testing.T) {
 
 	// Check if the options are set to default values
 	assert.Equal(t, ":8080", options.RunAddr())
-	assert.Equal(t, "", options.DataBaseDSN())
+	assert.Equal(t, "testdb_env", options.DataBaseDSN())
 	assert.Equal(t, "info", options.LogLevel())
-	assert.Equal(t, "", options.FileStoragePath())
-	assert.Equal(t, "test_key", options.JWTSigningKey())
-	assert.Equal(t, "", options.HTTPSCertFile())
-	assert.Equal(t, "", options.HTTPSKeyFile())
-	assert.False(t, options.EnableHTTPS())
+	assert.Equal(t, "test777", options.FileStoragePath())
+	assert.Equal(t, "test_key_env", options.JWTSigningKey())
+	assert.Equal(t, "/path/to/cert_env.pem", options.HTTPSCertFile())
+	assert.Equal(t, "/path/to/key_env.pem", options.HTTPSKeyFile())
+	assert.True(t, options.EnableHTTPS())
 }

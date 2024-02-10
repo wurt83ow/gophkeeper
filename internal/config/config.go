@@ -27,9 +27,9 @@ func (o *Options) ParseFlags() {
 	regStringVar(&o.flagRunAddr, "a", ":8080", "address and port to run server")
 	regStringVar(&o.flagDataBaseDSN, "d", "", "")
 	regStringVar(&o.flagLogLevel, "l", "info", "log level")
-	regStringVar(&o.flagHTTPSCertFile, "r", "", "path to https cert file")
-	regStringVar(&o.flagHTTPSKeyFile, "k", "", "path to https key file")
-	regBoolVar(&o.flagEnableHTTPS, "s", false, "enable https")
+	regStringVar(&o.flagHTTPSCertFile, "r", "server.crt", "path to https cert file")
+	regStringVar(&o.flagHTTPSKeyFile, "k", "server.key", "path to https key file")
+	regBoolVar(&o.flagEnableHTTPS, "s", true, "enable https")
 	regStringVar(&o.flagJWTSigningKey, "j", "test_key", "jwt signing key")
 	regStringVar(&o.flagFileStoragePath, "n", "", "file storage path")
 

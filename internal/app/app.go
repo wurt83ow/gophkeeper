@@ -74,7 +74,7 @@ func (server *Server) Serve() {
 	r.Mount("/", genHandler)
 
 	// Configure and start the server
-	startServer(server, r, option.RunAddr())
+	startServer(server, r, option.RunAddr(), option.EnableHTTPS())
 }
 
 func initializeKeeper(dataBaseDSN func() string, logger *logger.Logger) *bdkeeper.BDKeeper {
@@ -99,7 +99,7 @@ func initializeBaseController(storage *storage.MemoryStorage, options *config.Op
 	return controllers.NewBaseController(storage, options, logger, authz)
 }
 
-func startServer(server *Server, router chi.Router, address string) {
+func startServer(server *Server, router chi.Router, address string, enableHTTPS bool) {
 	const (
 		oneMegabyte = 1 << 20
 		readTimeout = 3 * time.Second
@@ -115,10 +115,20 @@ func startServer(server *Server, router chi.Router, address string) {
 	}
 
 	log.Printf("Starting server at %s\n", address)
-	err := server.srv.ListenAndServe()
+
+	// Start the HTTP/HTTPS server
+	var err error
+	if enableHTTPS {
+		log.Printf("HTTPS enabled")
+		err = server.srv.ListenAndServeTLS("server.crt", "server.key")//!!!
+	} else {
+		log.Printf("HTTPS disabled")
+		err = server.srv.ListenAndServe()
+	}
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalln(err)
 	}
+
 }
 
 // Shutdown gracefully shuts down the server.
