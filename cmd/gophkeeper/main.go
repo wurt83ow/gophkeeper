@@ -11,28 +11,27 @@ import (
 )
 
 func main() {
-
-	// Создание корневого контекста с возможностью отмены
+	// Create a root context with cancellation capability
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Создание канала для обработки сигналов
+	// Create a channel to handle signals
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
-	// Запуск сервера
+	// Start the server
 	server := app.NewServer(ctx)
 	go func() {
-		// Ожидание сигнала
+		// Wait for a signal
 		sig := <-signalCh
 		log.Printf("Received signal: %+v", sig)
 
-		// Завершение работы сервера
+		// Shutdown the server
 		server.Shutdown()
 
-		// Отмена контекста
+		// Cancel the context
 		cancel()
 	}()
 
-	// Запуск сервера
+	// Start the server
 	server.Serve()
 }

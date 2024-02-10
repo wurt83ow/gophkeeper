@@ -1,3 +1,4 @@
+// Package config provides functionality for managing configuration options.
 package config
 
 import (
@@ -9,18 +10,19 @@ import (
 	"strconv"
 )
 
+// Options represents the configuration options.
 type Options struct {
 	flagRunAddr, flagDataBaseDSN, flagLogLevel,
 	flagHTTPSCertFile, flagHTTPSKeyFile, flagJWTSigningKey, flagFileStoragePath string
 	flagEnableHTTPS bool
 }
 
+// NewOptions creates a new instance of Options.
 func NewOptions() *Options {
 	return new(Options)
 }
 
-// parseFlags handles command line arguments
-// and stores their values in the corresponding variables.
+// ParseFlags handles command line arguments and stores their values in the corresponding variables.
 func (o *Options) ParseFlags() {
 	regStringVar(&o.flagRunAddr, "a", ":8080", "address and port to run server")
 	regStringVar(&o.flagDataBaseDSN, "d", "", "")
@@ -75,18 +77,22 @@ func (o *Options) ParseFlags() {
 
 }
 
+// RunAddr returns the configured address and port to run the server.
 func (o *Options) RunAddr() string {
 	return getStringFlag("a")
 }
 
+// DataBaseDSN returns the configured DSN for the database.
 func (o *Options) DataBaseDSN() string {
 	return getStringFlag("d")
 }
 
+// LogLevel returns the configured log level.
 func (o *Options) LogLevel() string {
 	return getStringFlag("l")
 }
 
+// FileStoragePath returns the configured file storage path.
 func (o *Options) FileStoragePath() string {
 	fileStoragePath := getStringFlag("n")
 	if fileStoragePath == "" {
@@ -96,7 +102,7 @@ func (o *Options) FileStoragePath() string {
 		}
 		fileStoragePath = filepath.Join(home, "gkeeper_server")
 
-		// Создание каталога gkeeper, если он не существует
+		// Create the gkeeper directory if it doesn't exist
 		if _, err := os.Stat(fileStoragePath); os.IsNotExist(err) {
 			err = os.Mkdir(fileStoragePath, 0755)
 			if err != nil {
@@ -112,12 +118,12 @@ func (o *Options) JWTSigningKey() string {
 	return getStringFlag("j")
 }
 
-// HTTPSCertFile returns the path to HTTPS cert file.
+// HTTPSCertFile returns the path to the HTTPS cert file.
 func (o *Options) HTTPSCertFile() string {
 	return getStringFlag("r")
 }
 
-// HTTPSCertFile returns the path to HTTPS key file.
+// HTTPSKeyFile returns the path to the HTTPS key file.
 func (o *Options) HTTPSKeyFile() string {
 	return getStringFlag("k")
 }
@@ -127,6 +133,7 @@ func (o *Options) EnableHTTPS() bool {
 	return getBoolFlag("s")
 }
 
+// regStringVar registers a string flag with the specified name, default value, and usage string.
 func regStringVar(p *string, name string, value string, usage string) {
 	if flag.Lookup(name) == nil {
 		flag.StringVar(p, name, value, usage)
@@ -139,6 +146,8 @@ func regBoolVar(p *bool, name string, value bool, usage string) {
 		flag.BoolVar(p, name, value, usage)
 	}
 }
+
+// getStringFlag retrieves the string value of the specified flag.
 func getStringFlag(name string) string {
 	return flag.Lookup(name).Value.(flag.Getter).Get().(string)
 }
@@ -148,7 +157,7 @@ func getBoolFlag(name string) bool {
 	return flag.Lookup(name).Value.(flag.Getter).Get().(bool)
 }
 
-// GetAsString reads an environment or returns a default value.
+// GetAsString reads an environment variable or returns a default value.
 func GetAsString(key string, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value

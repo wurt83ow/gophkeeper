@@ -18,34 +18,34 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// Log represents a logging interface.
 type Log interface {
 	Info(string, ...zapcore.Field)
 }
 
+// BDKeeper represents a database keeper.
 type BDKeeper struct {
 	conn *sql.DB
 	log  Log
 }
 
+// NewBDKeeper creates a new BDKeeper instance.
 func NewBDKeeper(dsn func() string, log Log) *BDKeeper {
 	addr := dsn()
 	if addr == "" {
 		log.Info("database dsn is empty")
-
 		return nil
 	}
 
 	conn, err := sql.Open("pgx", dsn())
 	if err != nil {
-		log.Info("Unable to connection to database: ", zap.Error(err))
-
+		log.Info("Unable to connect to database: ", zap.Error(err))
 		return nil
 	}
 
 	driver, err := postgres.WithInstance(conn, new(postgres.Config))
 	if err != nil {
 		log.Info("error getting driver: ", zap.Error(err))
-
 		return nil
 	}
 
@@ -54,7 +54,7 @@ func NewBDKeeper(dsn func() string, log Log) *BDKeeper {
 		log.Info("error getting getwd: ", zap.Error(err))
 	}
 
-	// fix error test path
+	// Fix error test path
 	mp := dir + "/migrations"
 
 	var path string
@@ -99,79 +99,83 @@ func (bdk *BDKeeper) Ping() bool {
 func (bdk *BDKeeper) Close() bool {
 	bdk.log.Info("Stop database")
 	bdk.conn.Close()
-	bdk.log.Info("All sql queries are completed")
+	bdk.log.Info("All SQL queries are completed")
 	return true
 }
 
+// UserExists checks if a user exists in the database.
 func (bdk *BDKeeper) UserExists(ctx context.Context, username string) (bool, error) {
-	// Запрос для проверки наличия пользователя в базе данных
+	// Query to check if the user exists in the database.
 	query := `SELECT COUNT(*) FROM Users WHERE username = $1;`
 
-	// Выполнение запроса
+	// Execute the query.
 	row := bdk.conn.QueryRowContext(ctx, query, username)
 
-	// Получение результата
+	// Get the result.
 	var count int
 	err := row.Scan(&count)
 	if err != nil {
 		return false, err
 	}
 
-	// Если количество записей больше 0, значит пользователь существует
+	// If the count is greater than 0, the user exists.
 	return count > 0, nil
 }
 
+// AddUser adds a new user to the database.
 func (bdk *BDKeeper) AddUser(ctx context.Context, username string, hashedPassword string) error {
-	// Запрос для добавления нового пользователя в базу данных
+	// Query to add a new user to the database.
 	query := `INSERT INTO Users (username, password) VALUES ($1, $2);`
 
-	// Выполнение запроса
+	// Execute the query.
 	_, err := bdk.conn.ExecContext(ctx, query, username, hashedPassword)
 	return err
 }
 
+// GetPassword retrieves the hashed password of a user from the database.
 func (bdk *BDKeeper) GetPassword(ctx context.Context, username string) (string, error) {
-	// Запрос для получения хешированного пароля пользователя из базы данных
+	// Query to retrieve the hashed password of a user from the database.
 	query := `SELECT password FROM Users WHERE username = $1;`
 
-	// Выполнение запроса
+	// Execute the query.
 	row := bdk.conn.QueryRowContext(ctx, query, username)
 
-	// Получение результата
+	// Get the result.
 	var password string
 	err := row.Scan(&password)
 	if err != nil {
 		return "", err
 	}
 
-	// Возвращаем хешированный пароль
+	// Return the hashed password.
 	return password, nil
 }
 
+// GetUserID retrieves the user ID of a user from the database.
 func (bdk *BDKeeper) GetUserID(ctx context.Context, username string) (int, error) {
-	// Запрос для получения идентификатора пользователя из базы данных
+	// Query to retrieve the user ID of a user from the database.
 	query := `SELECT id FROM Users WHERE username = $1;`
 
-	// Выполнение запроса
+	// Execute the query.
 	row := bdk.conn.QueryRowContext(ctx, query, username)
 
-	// Получение результата
+	// Get the result.
 	var id int
 	err := row.Scan(&id)
 	if err != nil {
 		return 0, err
 	}
 
-	// Возвращаем идентификатор пользователя
+	// Return the user ID.
 	return id, nil
 }
 
+// AddData adds data to a table in the database.
 func (bdk *BDKeeper) AddData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error {
+	keys := make([]string, 0, len(data)+2)        // +2 for user_id and entry_id
+	values := make([]interface{}, 0, len(data)+2) // +2 for user_id and entry_id
 
-	keys := make([]string, 0, len(data)+2)        // +2 для user_id и entry_id
-	values := make([]interface{}, 0, len(data)+2) // +2 для user_id и entry_id
-
-	// Добавьте user_id и entry_id в начало списков ключей и значений
+	// Add user_id and entry_id to the beginning of the lists of keys and values
 	keys = append(keys, "user_id", "id")
 	values = append(values, user_id, entry_id)
 
@@ -180,13 +184,13 @@ func (bdk *BDKeeper) AddData(ctx context.Context, table string, user_id int, ent
 		values = append(values, value)
 	}
 
-	// Создаем подстановочные знаки для значений
+	// Create placeholders for values
 	placeholders := make([]string, len(values))
 	for i := range values {
 		placeholders[i] = "$" + strconv.Itoa(i+1)
 	}
 
-	stmt, err := bdk.conn.Prepare(fmt.Sprintf("INSERT INTO %s(%s) values(%s)", table, strings.Join(keys, ","), strings.Join(placeholders, ",")))
+	stmt, err := bdk.conn.Prepare(fmt.Sprintf("INSERT INTO %s(%s) VALUES(%s)", table, strings.Join(keys, ","), strings.Join(placeholders, ",")))
 	if err != nil {
 		return err
 	}
@@ -195,6 +199,7 @@ func (bdk *BDKeeper) AddData(ctx context.Context, table string, user_id int, ent
 	return err
 }
 
+// UpdateData updates data in a table in the database.
 func (bdk *BDKeeper) UpdateData(ctx context.Context, table string, user_id int, entry_id string, data map[string]string) error {
 	setClauses := make([]string, 0, len(data))
 	values := make([]interface{}, 0, len(data)+2) // +2 для user_id и id
@@ -206,7 +211,7 @@ func (bdk *BDKeeper) UpdateData(ctx context.Context, table string, user_id int, 
 		i++
 	}
 
-	// Добавьте user_id и id в конец списка значений
+	// Add user_id and id to the end of the list of values
 	values = append(values, user_id, entry_id)
 
 	stmt, err := bdk.conn.Prepare(fmt.Sprintf("UPDATE %s SET %s WHERE user_id = $%d AND id = $%d", table, strings.Join(setClauses, ","), i, i+1))
@@ -217,61 +222,64 @@ func (bdk *BDKeeper) UpdateData(ctx context.Context, table string, user_id int, 
 	return err
 }
 
+// DeleteData deletes data from a table in the database.
 func (bdk *BDKeeper) DeleteData(ctx context.Context, table string, user_id int, entry_id string) error {
 	// Check user_id and table
 	if user_id == 0 || table == "" {
 		return errors.New("user_id and table must be specified")
 	}
 
-	// Check id
+	// Check entry_id
 	if entry_id == "" {
-		return errors.New("id must be specified")
+		return errors.New("entry_id must be specified")
 	}
 
-	// Prepare the query
+	// Prepare the query to check the existence of the record
 	query := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE user_id = $1 AND id = $2", table)
 	args := []interface{}{user_id, entry_id}
 
 	// Execute the query
 	row := bdk.conn.QueryRowContext(ctx, query, args...)
 	var count int
-	err := row.Scan(&count)
-	if err != nil {
+	if err := row.Scan(&count); err != nil {
 		return err
 	}
 
 	// Check the number of records found
-	if count > 1 {
-		return errors.New("More than one record found")
-	} else if count == 0 {
-		return errors.New("No records found")
+	if count != 1 {
+		return errors.New("record not found or more than one record found")
 	}
 
-	// Delete the record
-	query = strings.Replace(query, "SELECT COUNT(*)", "DELETE", 1)
-	_, err = bdk.conn.ExecContext(ctx, query, args...)
+	// Prepare the query to delete the record
+	deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE user_id = $1 AND id = $2", table)
+
+	// Execute the query to delete the record
+	_, err := bdk.conn.ExecContext(ctx, deleteQuery, args...)
 	return err
 }
 
+// GetAllData retrieves all data from a table in the database.
 func (bdk *BDKeeper) GetAllData(ctx context.Context, table string, userID int, lastSync time.Time, inclDel bool) ([]map[string]string, error) {
-	// Получаем все колонки таблицы
+	// Get all columns of the table
 	rows, err := bdk.conn.QueryContext(ctx, fmt.Sprintf(`SELECT column_name FROM information_schema.columns WHERE table_name = '%s'`, strings.ToLower(table)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get columns: %w", err)
 	}
+	defer rows.Close()
 
 	var cols []string
 	for rows.Next() {
 		var col string
-		err := rows.Scan(&col)
-		if err != nil {
+		if err := rows.Scan(&col); err != nil {
 			return nil, fmt.Errorf("failed to scan column: %w", err)
 		}
-
 		cols = append(cols, col)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows encountered an error: %w", err)
+	}
 
-	// Формируем условие для запроса
+	// Build the condition for the query
 	var condition string
 	if !inclDel {
 		condition += " AND deleted = false"
@@ -280,23 +288,22 @@ func (bdk *BDKeeper) GetAllData(ctx context.Context, table string, userID int, l
 		condition += fmt.Sprintf(" AND updated_at > '%s'", lastSync.Format(time.RFC3339))
 	}
 
-	// Запрашиваем все данные из таблицы для данного user_id с учетом условия
-	rows, err = bdk.conn.QueryContext(ctx, fmt.Sprintf("SELECT %s FROM %s WHERE user_id = %d%s", strings.Join(cols, ","), table, userID, condition))
+	// Execute the query to fetch all data from the table for the given user ID considering the condition
+	query := fmt.Sprintf("SELECT %s FROM %s WHERE user_id = $1%s", strings.Join(cols, ","), table, condition)
+	rows, err = bdk.conn.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
 	defer rows.Close()
 
 	values := make([]interface{}, len(cols))
-
 	for i := range values {
 		values[i] = new(sql.NullString)
 	}
 
 	var data []map[string]string
 	for rows.Next() {
-		err := rows.Scan(values...)
-		if err != nil {
+		if err := rows.Scan(values...); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 
@@ -306,10 +313,8 @@ func (bdk *BDKeeper) GetAllData(ctx context.Context, table string, userID int, l
 				row[column] = ns.String
 			}
 		}
-
 		data = append(data, row)
 	}
-
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("rows encountered an error: %w", err)
 	}
@@ -317,11 +322,14 @@ func (bdk *BDKeeper) GetAllData(ctx context.Context, table string, userID int, l
 	return data, nil
 }
 
+// ClearData clears data from a table in the database.
 func (bdk *BDKeeper) ClearData(ctx context.Context, table string, userID int) error {
 	stmt, err := bdk.conn.Prepare(fmt.Sprintf("DELETE FROM %s WHERE user_id = $1", table))
 	if err != nil {
 		return err
 	}
+	defer stmt.Close()
+
 	_, err = stmt.ExecContext(ctx, userID)
 	return err
 }

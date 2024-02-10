@@ -17,11 +17,13 @@ import (
 	"github.com/wurt83ow/gophkeeper-server/internal/storage"
 )
 
+// Server represents the application server.
 type Server struct {
 	srv *http.Server
 	ctx context.Context
 }
 
+// NewServer creates a new Server instance.
 func NewServer(ctx context.Context) *Server {
 	server := new(Server)
 	server.ctx = ctx
@@ -29,48 +31,49 @@ func NewServer(ctx context.Context) *Server {
 	return server
 }
 
+// Serve starts the server.
 func (server *Server) Serve() {
-	// create and initialize a new option instance
+	// Create and initialize a new option instance
 	option := config.NewOptions()
 	option.ParseFlags()
 
-	// get a new logger
+	// Get a new logger
 	nLogger, err := logger.NewLogger(option.LogLevel())
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	// initialize the keeper instance
+	// Initialize the keeper instance
 	keeper := initializeKeeper(option.DataBaseDSN, nLogger)
 	defer keeper.Close()
 
-	// initialize the storage instance
+	// Initialize the storage instance
 	memoryStorage := initializeStorage(keeper, nLogger)
 
 	authz := authz.NewJWTAuthz(option.JWTSigningKey(), nLogger)
 
-	// create a new controller to process incoming requests
-	//basecontr := initializeBaseController(memoryStorage, option, nLogger, authz)
-	basecontr := initializeBaseController(memoryStorage, option, nLogger, authz)
+	// Create a new controller to process incoming requests
+	baseController := initializeBaseController(memoryStorage, option, nLogger, authz)
 
-	// Создайте экземпляр ChiServerOptions с вашим middleware
+	// Create an instance of ChiServerOptions with your middleware
 	options := controllers.ChiServerOptions{
 		Middlewares: []controllers.MiddlewareFunc{
 			authz.JWTAuthzMiddleware(memoryStorage, nLogger),
 		},
 	}
 
-	genHandler := controllers.HandlerWithOptions(basecontr, options) // создайте обработчик HTTP из вашего сервера
+	// Create a handler with options
+	genHandler := controllers.HandlerWithOptions(baseController, options)
 
-	// get a middleware for logging requests
+	// Get a middleware for logging requests
 	reqLog := middleware.NewReqLog(nLogger)
 
-	// create router and mount routes
+	// Create router and mount routes
 	r := chi.NewRouter()
 	r.Use(reqLog.RequestLogger)
 	r.Mount("/", genHandler)
 
-	// configure and start the server
+	// Configure and start the server
 	startServer(server, r, option.RunAddr())
 }
 
@@ -103,20 +106,12 @@ func startServer(server *Server, router chi.Router, address string) {
 	)
 
 	server.srv = &http.Server{
-		Addr:                         address,
-		Handler:                      router,
-		ReadHeaderTimeout:            readTimeout,
-		WriteTimeout:                 readTimeout,
-		IdleTimeout:                  readTimeout,
-		ReadTimeout:                  readTimeout,
-		MaxHeaderBytes:               oneMegabyte, // 1 MB
-		DisableGeneralOptionsHandler: false,
-		TLSConfig:                    nil,
-		TLSNextProto:                 nil,
-		ConnState:                    nil,
-		ErrorLog:                     nil,
-		BaseContext:                  nil,
-		ConnContext:                  nil,
+		Addr:              address,
+		Handler:           router,
+		ReadHeaderTimeout: readTimeout,
+		WriteTimeout:      readTimeout,
+		IdleTimeout:       readTimeout,
+		MaxHeaderBytes:    oneMegabyte, // 1 MB
 	}
 
 	log.Printf("Starting server at %s\n", address)
@@ -126,6 +121,7 @@ func startServer(server *Server, router chi.Router, address string) {
 	}
 }
 
+// Shutdown gracefully shuts down the server.
 func (server *Server) Shutdown() {
 	log.Printf("server stopped")
 
@@ -136,7 +132,6 @@ func (server *Server) Shutdown() {
 
 	if err := server.srv.Shutdown(ctxShutDown); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
-			//nolint:gocritic
 			log.Fatalf("server Shutdown Failed:%s", err)
 		}
 	}
