@@ -224,6 +224,7 @@ func (bdk *BDKeeper) UpdateData(ctx context.Context, table string, user_id int, 
 
 // DeleteData deletes data from a table in the database.
 func (bdk *BDKeeper) DeleteData(ctx context.Context, table string, user_id int, entry_id string) error {
+	fmt.Println("ddddddddddddddddddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeellllllllllllll")
 	// Check user_id and table
 	if user_id == 0 || table == "" {
 		return errors.New("user_id and table must be specified")

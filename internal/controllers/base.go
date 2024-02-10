@@ -176,7 +176,15 @@ func (h *BaseController) PostAddDataTableUserIDEntryID(w http.ResponseWriter, r 
 
 // (DELETE /deleteData/{table}/{userID}/{entryID})
 func (h *BaseController) DeleteDeleteDataTableUserIDEntryID(w http.ResponseWriter, r *http.Request, table string, userID int, entryID string) {
-	w.WriteHeader(http.StatusNotImplemented)
+	// Call the 'DeleteData' method with the userID, table, and entryID
+	err := h.storage.DeleteData(r.Context(), table, userID, entryID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// If everything goes well, respond with a status of '200 OK'
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *BaseController) GetGetAllDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int, lastSyncStr string) {
@@ -367,7 +375,23 @@ func (h *BaseController) PostSendFileUserID(w http.ResponseWriter, r *http.Reque
 
 // (PUT /updateData/{table}/{userID}/{entryID})
 func (h *BaseController) PutUpdateDataTableUserIDEntryID(w http.ResponseWriter, r *http.Request, table string, userID int, entryID string) {
-	w.WriteHeader(http.StatusNotImplemented)
+	// Parse and decode the request body into a new 'map[string]string' value
+	var requestBody map[string]string
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Call the 'UpdateData' method with the userID, table, entryID, and data from the request body
+	err = h.storage.UpdateData(r.Context(), table, userID, entryID, requestBody)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// If everything goes well, respond with a status of 'OK'
+	w.WriteHeader(http.StatusOK)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -425,6 +449,7 @@ func (siw *ServerInterfaceWrapper) PostAddDataTableUserIDEntryID(w http.Response
 
 // DeleteDeleteDataTableUserIDEntryID operation middleware
 func (siw *ServerInterfaceWrapper) DeleteDeleteDataTableUserIDEntryID(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("444444444444444444444444444444444444444444444444444444444444444")
 	ctx := r.Context()
 
 	var err error
@@ -459,11 +484,11 @@ func (siw *ServerInterfaceWrapper) DeleteDeleteDataTableUserIDEntryID(w http.Res
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteDeleteDataTableUserIDEntryID(w, r, table, userID, entryID)
 	}))
-
+	fmt.Println("3333333333333333333333333333333333333333333333333333333333333")
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
 	}
-
+	fmt.Println("222222222222222222222222222222222222222222222222222222222222222")
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
