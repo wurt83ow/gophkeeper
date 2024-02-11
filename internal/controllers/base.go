@@ -188,24 +188,20 @@ func (h *BaseController) DeleteDeleteDataTableUserIDEntryID(w http.ResponseWrite
 }
 
 func (h *BaseController) GetGetAllDataTableUserID(w http.ResponseWriter, r *http.Request, table string, userID int, lastSyncStr string) {
-	fmt.Println("sfdljk777777777777777777777777777777777777777")
 	// Преобразуйте lastSync обратно в time.Time
 	lastSync, err := time.Parse(time.RFC3339, lastSyncStr)
 	if err != nil {
 		http.Error(w, "Неверный формат lastSync: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	fmt.Println("sfdljk7777777777777777777777777777777733333333333333", lastSync)
 	inclDel := !lastSync.IsZero()
 
 	// Получение данных из БД
 	data, err := h.storage.GetAllData(r.Context(), table, userID, lastSync, inclDel)
 	if err != nil {
-		fmt.Println("sfdljk777777777777777777777777777777777744444", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("sfdljk7777777777777777777777777777777777755555555", data)
 	// Преобразование данных в JSON
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -449,7 +445,6 @@ func (siw *ServerInterfaceWrapper) PostAddDataTableUserIDEntryID(w http.Response
 
 // DeleteDeleteDataTableUserIDEntryID operation middleware
 func (siw *ServerInterfaceWrapper) DeleteDeleteDataTableUserIDEntryID(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("444444444444444444444444444444444444444444444444444444444444444")
 	ctx := r.Context()
 
 	var err error
@@ -484,11 +479,11 @@ func (siw *ServerInterfaceWrapper) DeleteDeleteDataTableUserIDEntryID(w http.Res
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteDeleteDataTableUserIDEntryID(w, r, table, userID, entryID)
 	}))
-	fmt.Println("3333333333333333333333333333333333333333333333333333333333333")
+
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
 	}
-	fmt.Println("222222222222222222222222222222222222222222222222222222222222222")
+
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
