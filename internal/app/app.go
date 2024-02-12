@@ -74,7 +74,8 @@ func (server *Server) Serve() {
 	r.Mount("/", genHandler)
 
 	// Configure and start the server
-	startServer(server, r, option.RunAddr(), option.EnableHTTPS())
+	startServer(server, r, option.RunAddr(), option.EnableHTTPS(),
+		option.HTTPSCertFile(), option.HTTPSKeyFile())
 }
 
 func initializeKeeper(dataBaseDSN func() string, logger *logger.Logger) *bdkeeper.BDKeeper {
@@ -99,7 +100,8 @@ func initializeBaseController(storage *storage.MemoryStorage, options *config.Op
 	return controllers.NewBaseController(storage, options, logger, authz)
 }
 
-func startServer(server *Server, router chi.Router, address string, enableHTTPS bool) {
+func startServer(server *Server, router chi.Router, address string,
+	enableHTTPS bool, HTTPSCertFile, HTTPSKeyFile string) {
 	const (
 		oneMegabyte = 1 << 20
 		readTimeout = 3 * time.Second
@@ -120,7 +122,7 @@ func startServer(server *Server, router chi.Router, address string, enableHTTPS 
 	var err error
 	if enableHTTPS {
 		log.Printf("HTTPS enabled")
-		err = server.srv.ListenAndServeTLS("server.crt", "server.key")//!!!
+		err = server.srv.ListenAndServeTLS(HTTPSCertFile, HTTPSKeyFile)
 	} else {
 		log.Printf("HTTPS disabled")
 		err = server.srv.ListenAndServe()
