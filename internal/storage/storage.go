@@ -41,8 +41,6 @@ type Keeper interface {
 	DeleteData(ctx context.Context, table string, user_id int, entry_id string) error
 	// GetAllData retrieves all data from the storage.
 	GetAllData(ctx context.Context, table string, user_id int, last_sync time.Time, incl_del bool) ([]map[string]string, error)
-	// ClearData clears data from the storage.
-	ClearData(ctx context.Context, table string, userID int) error
 }
 
 // NewMemoryStorage creates a new MemoryStorage instance with the provided Keeper and logger.
@@ -91,9 +89,4 @@ func (ms *MemoryStorage) DeleteData(ctx context.Context, table string, user_id i
 // GetAllData retrieves all data from the storage.
 func (ms *MemoryStorage) GetAllData(ctx context.Context, table string, user_id int, last_sync time.Time, incl_del bool) ([]map[string]string, error) {
 	return ms.keeper.GetAllData(ctx, table, user_id, last_sync, incl_del)
-}
-
-// ClearData clears data from the storage.
-func (ms *MemoryStorage) ClearData(ctx context.Context, userID int, table string) error {
-	return ms.keeper.ClearData(ctx, table, userID)
 }

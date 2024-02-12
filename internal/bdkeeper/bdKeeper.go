@@ -30,49 +30,56 @@ type BDKeeper struct {
 }
 
 // NewBDKeeper creates a new BDKeeper instance.
-func NewBDKeeper(dsn func() string, log Log) *BDKeeper {
+func NewBDKeeper(dsn func() string, log Log, db *sql.DB) (*BDKeeper, error) {
 	addr := dsn()
-	if addr == "" {
+	if addr == "" && db == nil {
 		log.Info("database dsn is empty")
-		return nil
+		return nil, errors.New("database dsn is empty")
 	}
 
-	conn, err := sql.Open("pgx", dsn())
-	if err != nil {
-		log.Info("Unable to connect to database: ", zap.Error(err))
-		return nil
-	}
+	// If a database is passed, use it, otherwise connect to a new database.
+	var conn *sql.DB
+	if db != nil {
+		conn = db
+	} else {
+		var err error
+		conn, err = sql.Open("pgx", dsn())
+		if err != nil {
+			log.Info("Unable to connect to database: ", zap.Error(err))
+			return nil, err
+		}
+		driver, err := postgres.WithInstance(conn, new(postgres.Config))
+		if err != nil {
+			log.Info("error getting driver: ", zap.Error(err))
+			return nil, err
+		}
 
-	driver, err := postgres.WithInstance(conn, new(postgres.Config))
-	if err != nil {
-		log.Info("error getting driver: ", zap.Error(err))
-		return nil
-	}
+		dir, err := os.Getwd()
+		if err != nil {
+			log.Info("error getting getwd: ", zap.Error(err))
+		}
 
-	dir, err := os.Getwd()
-	if err != nil {
-		log.Info("error getting getwd: ", zap.Error(err))
-	}
+		// Fix error test path
+		mp := dir + "/migrations"
 
-	// Fix error test path
-	mp := dir + "/migrations"
+		var path string
+		if _, err := os.Stat(mp); err != nil {
+			path = "../../"
+		}
 
-	var path string
-	if _, err := os.Stat(mp); err != nil {
-		path = "../../"
-	}
+		m, err := migrate.NewWithDatabaseInstance(
+			fmt.Sprintf("file://%smigrations", path),
+			"postgres",
+			driver)
+		if err != nil {
+			log.Info("Error creating migration instance : ", zap.Error(err))
+			return nil, err
+		}
 
-	m, err := migrate.NewWithDatabaseInstance(
-		fmt.Sprintf("file://%smigrations", path),
-		"postgres",
-		driver)
-	if err != nil {
-		log.Info("Error creating migration instance : ", zap.Error(err))
-	}
-
-	err = m.Up()
-	if err != nil {
-		log.Info("Error while performing migration: ", zap.Error(err))
+		err = m.Up()
+		if err != nil {
+			log.Info("Error while performing migration: ", zap.Error(err))
+		}
 	}
 
 	log.Info("Connected!")
@@ -80,7 +87,7 @@ func NewBDKeeper(dsn func() string, log Log) *BDKeeper {
 	return &BDKeeper{
 		conn: conn,
 		log:  log,
-	}
+	}, nil
 }
 
 // Ping checks the connectivity to the PostgreSQL database and returns true if successful, otherwise false.
@@ -98,7 +105,11 @@ func (bdk *BDKeeper) Ping() bool {
 // Close closes the connection to the PostgreSQL database and returns true if successful, otherwise false.
 func (bdk *BDKeeper) Close() bool {
 	bdk.log.Info("Stop database")
-	bdk.conn.Close()
+	err := bdk.conn.Close()
+	if err != nil {
+		bdk.log.Info("Error closing database connection: ", zap.Error(err))
+		return false
+	}
 	bdk.log.Info("All SQL queries are completed")
 	return true
 }
@@ -320,16 +331,4 @@ func (bdk *BDKeeper) GetAllData(ctx context.Context, table string, userID int, l
 	}
 
 	return data, nil
-}
-
-// ClearData clears data from a table in the database.
-func (bdk *BDKeeper) ClearData(ctx context.Context, table string, userID int) error {
-	stmt, err := bdk.conn.Prepare(fmt.Sprintf("DELETE FROM %s WHERE user_id = $1", table))
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.ExecContext(ctx, userID)
-	return err
 }

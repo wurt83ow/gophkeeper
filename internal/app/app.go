@@ -44,7 +44,10 @@ func (server *Server) Serve() {
 	}
 
 	// Initialize the keeper instance
-	keeper := initializeKeeper(option.DataBaseDSN, nLogger)
+	keeper, err := initializeKeeper(option.DataBaseDSN, nLogger)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	defer keeper.Close()
 
 	// Initialize the storage instance
@@ -78,12 +81,8 @@ func (server *Server) Serve() {
 		option.HTTPSCertFile(), option.HTTPSKeyFile())
 }
 
-func initializeKeeper(dataBaseDSN func() string, logger *logger.Logger) *bdkeeper.BDKeeper {
-	if dataBaseDSN() == "" {
-		return nil
-	}
-
-	return bdkeeper.NewBDKeeper(dataBaseDSN, logger)
+func initializeKeeper(dataBaseDSN func() string, logger *logger.Logger) (*bdkeeper.BDKeeper, error) {
+	return bdkeeper.NewBDKeeper(dataBaseDSN, logger, nil)
 }
 
 func initializeStorage(keeper storage.Keeper, logger *logger.Logger) *storage.MemoryStorage {
