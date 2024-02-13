@@ -233,7 +233,7 @@ func (bdk *BDKeeper) UpdateData(ctx context.Context, table string, user_id int, 
 	return err
 }
 
-// DeleteData deletes data from a table in the database.
+// DeleteData marks data as deleted in a table in the database and updates the 'updated_at' field.
 func (bdk *BDKeeper) DeleteData(ctx context.Context, table string, user_id int, entry_id string) error {
 	// Check user_id and table
 	if user_id == 0 || table == "" {
@@ -245,27 +245,12 @@ func (bdk *BDKeeper) DeleteData(ctx context.Context, table string, user_id int, 
 		return errors.New("entry_id must be specified")
 	}
 
-	// Prepare the query to check the existence of the record
-	query := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE user_id = $1 AND id = $2", table)
-	args := []interface{}{user_id, entry_id}
+	// Prepare the query to update the record's deleted flag and 'updated_at' field
+	updateQuery := fmt.Sprintf("UPDATE %s SET deleted = TRUE, updated_at = $1 WHERE user_id = $2 AND id = $3", table)
+	args := []interface{}{time.Now().UTC(), user_id, entry_id}
 
-	// Execute the query
-	row := bdk.conn.QueryRowContext(ctx, query, args...)
-	var count int
-	if err := row.Scan(&count); err != nil {
-		return err
-	}
-
-	// Check the number of records found
-	if count != 1 {
-		return errors.New("record not found or more than one record found")
-	}
-
-	// Prepare the query to delete the record
-	deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE user_id = $1 AND id = $2", table)
-
-	// Execute the query to delete the record
-	_, err := bdk.conn.ExecContext(ctx, deleteQuery, args...)
+	// Execute the query to update the record's deleted flag and 'updated_at' field
+	_, err := bdk.conn.ExecContext(ctx, updateQuery, args...)
 	return err
 }
 
